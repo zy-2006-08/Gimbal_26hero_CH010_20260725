@@ -1,22 +1,23 @@
 /**
   ******************************************************************************
   * File Name			  : CP_System.c
-  * Description			: RM²ÃÅÐÏµÍ³¿â
+  * Description			: RMï¿½ï¿½ï¿½ï¿½ÏµÍ³ï¿½ï¿½
 	* Version         : 1.2
   * Creation Date		: 2021.7.22
   ******************************************************************************
   */
 
 #include "CP_System.h"
+#include "crc.h"
 
-volatile static uint16_t CP_rx_len=0;//½ÓÊÕµ½µÄÊý¾Ý³¤¶È
+volatile static uint16_t CP_rx_len=0;//ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý³ï¿½ï¿½ï¿½
 volatile static uint8_t CP_FIFO=0;
 
-uint8_t CP_rev_buf[2][CP_RX_BUF_SIZE]; //Êý¾ÝË«»º´æÊý×é
+uint8_t CP_rev_buf[2][CP_RX_BUF_SIZE]; //ï¿½ï¿½ï¿½ï¿½Ë«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 uint8_t CP_send_buf[256];
 volatile uint32_t sysTickUptime;
 volatile uint32_t usTicks = 0;
-uint32_t DUM_Connect_time = 0;//ÉÏÏÂÖ÷¿ØÁªÏµ
+uint32_t DUM_Connect_time = 0;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
 
 CP_typedef CP;
 
@@ -82,7 +83,7 @@ bool Judge_IF_DUM_Normal(void)
 	return res;
 }
 
-void CP_Delete_Graphic(uint8_t operate_tpye,uint8_t layer) //operate_tpye²ÎÊý£º0Îª¿Õ²Ù×÷£¬1ÎªÉ¾³ýÄ³¸öÍ¼²ã£¬2ÎªÉ¾³ýËùÓÐ
+void CP_Delete_Graphic(uint8_t operate_tpye,uint8_t layer) //operate_tpyeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0Îªï¿½Õ²ï¿½ï¿½ï¿½ï¿½ï¿½1ÎªÉ¾ï¿½ï¿½Ä³ï¿½ï¿½Í¼ï¿½ã£¬2ÎªÉ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
 	CP.frame_header.SOF=0xA5;
 	CP.frame_header.data_length=6+2;
@@ -369,7 +370,7 @@ void CP_DrawOrDelete_One_Number(uint32_t graphic_name,operate_tpyedef operate_tp
 	CP.ext_client_custom_graphic_single_t.grapic_data_struct.layer=layer;	// bit 6-9,max=9
 	CP.ext_client_custom_graphic_single_t.grapic_data_struct.color=color;
 	CP.ext_client_custom_graphic_single_t.grapic_data_struct.start_angle=number_size;	// bit 14-22,max=511,typical value=30
-	CP.ext_client_custom_graphic_single_t.grapic_data_struct.end_angle=number_digit;	// bit 23-31,Èô»æÖÆÐ¡Êý,¸ÃÎ»ÎªÐ¡ÊýÎ»Êý,Èô»æÖÆÕûÊý,¸ÃÎ»ÎÞÐ§
+	CP.ext_client_custom_graphic_single_t.grapic_data_struct.end_angle=number_digit;	// bit 23-31,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½,ï¿½ï¿½Î»ÎªÐ¡ï¿½ï¿½Î»ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½Î»ï¿½ï¿½Ð§
 	CP.ext_client_custom_graphic_single_t.grapic_data_struct.width=width;	// bit 0-9,max=1023,typical value=char_size/10
 	CP.ext_client_custom_graphic_single_t.grapic_data_struct.start_x=start_x;	// bit 10-20,max=2047
 	CP.ext_client_custom_graphic_single_t.grapic_data_struct.start_y=start_y;	// bit 21-31,max=2047
@@ -478,7 +479,7 @@ void CP_Robot_SendBytes(uint16_t data_cmd_id,uint16_t* data,uint8_t size)
 	CP.frame_header.SOF=0xA5;
 	CP.frame_header.data_length=6+size;
 	CP.cmd_id=0x0301;
-	CP.ext_student_interactive_header_data_t.data_cmd_id=data_cmd_id;  // ÄÚÈÝID£¬¿ÉÔÚ 0x0200 ~ 0x02FF ¼äÑ¡È¡
+	CP.ext_student_interactive_header_data_t.data_cmd_id=data_cmd_id;  // ï¿½ï¿½ï¿½ï¿½IDï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0x0200 ~ 0x02FF ï¿½ï¿½Ñ¡È¡
 	CP.ext_student_interactive_header_data_t.send_ID=Send_ID;
 	CP.ext_student_interactive_header_data_t.receiver_ID=Receiver_ID;
 	
@@ -550,10 +551,10 @@ static uint16_t CP_data_deal(void)
 						CP.ext_game_status_t.game_type=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex]&0x0f;
 						CP.ext_game_status_t.game_progress=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex]>>4;
 						CP.ext_game_status_t.stage_remain_time=CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];
-					break;//±ÈÈü×´Ì¬Êý¾Ý£¬1HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£ºËùÓÐ»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½Ý£ï¿½1Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0002:
 						CP.ext_game_result_t.winner=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
-					break;//±ÈÈü½á¹ûÊý¾Ý£¬±ÈÈü½áÊøºó·¢ËÍ£¬·¢ËÍ·¶Î§£ºËùÓÐ»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0003:
 						CP.ext_game_robot_HP_t.red_1_robot_HP=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_game_robot_HP_t.red_2_robot_HP=CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];
@@ -571,32 +572,32 @@ static uint16_t CP_data_deal(void)
 						CP.ext_game_robot_HP_t.blue_7_robot_HP=CP_rev_buf_point[27+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[26+5+2+CP_rev_buf_tempindex];
 						CP.ext_game_robot_HP_t.blue_outpost_HP=CP_rev_buf_point[29+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[28+5+2+CP_rev_buf_tempindex];
 						CP.ext_game_robot_HP_t.blue_base_HP=CP_rev_buf_point[31+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[30+5+2+CP_rev_buf_tempindex];
-					break;//±ÈÈü»úÆ÷ÈË´æ»îÊý¾Ý£¬1HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£ºËùÓÐ»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë´ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½1Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0004:
 						CP.ext_dart_status_t.dart_belong=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_dart_status_t.stage_remaining_time=CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];
-					break;//·ÉïÚ·¢Éä×´Ì¬£¬·ÉïÚ·¢Éäºó·¢ËÍ£¬·¢ËÍ·¶Î§£ºËùÓÐ»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½Ú·ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½Ú·ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0101:
 						CP.ext_event_data_t.event_type=CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex]<<24|CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex]<<16|CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
-					break;//³¡µØÊÂ¼þÊý¾Ý£¬1HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£º¼º·½»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½Ý£ï¿½1Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0102:
 						CP.ext_supply_projectile_action_t.supply_projectile_id=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_supply_projectile_action_t.supply_robot_id=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];
 						CP.ext_supply_projectile_action_t.supply_projectile_step=CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];
 						CP.ext_supply_projectile_action_t.supply_projectile_num=CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex];
-					break;//²¹¸øÕ¾¶¯×÷±êÊ¶Êý¾Ý£¬¶¯×÷´¥·¢ºó·¢ËÍ£¬·¢ËÍ·¶Î§£º¼º·½»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½ï¿½Õ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0103:
 						CP.ext_supply_projectile_booking_t.supply_projectile_id=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_supply_projectile_booking_t.supply_robot_id=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];
 						CP.ext_supply_projectile_booking_t.supply_num=CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];
-					break;//ÇëÇó²¹¸øÕ¾²¹µ¯Êý¾Ý£¬ÓÉ²ÎÈü¶Ó·¢ËÍ£¬ÉÏÏÞ 10Hz¡££¨RM¶Ô¿¹ÈüÉÐÎ´¿ª·Å£©
+					break;//ï¿½ï¿½ï¿½ó²¹¸ï¿½Õ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½É²ï¿½ï¿½ï¿½ï¿½Ó·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½ 10Hzï¿½ï¿½ï¿½ï¿½RMï¿½Ô¿ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½Å£ï¿½
 					case 0x0104:
 						CP.ext_referee_warning_t.level=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_referee_warning_t.foul_robot_id=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];
-					break;//²ÃÅÐ¾¯¸æÐÅÏ¢£¬¾¯¸æ·¢Éúºó·¢ËÍ£¬·¢ËÍ·¶Î§£º¼º·½»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½Ð¾ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½æ·¢ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0105:
 						CP.ext_dart_remaining_time_t.dart_remaining_time=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
-					break;//·ÉïÚ·¢Éä¿Úµ¹¼ÆÊ±£¬1HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£º¼º·½»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½Ú·ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½Ê±ï¿½ï¿½1Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0201:
 						CP.ext_game_robot_status_t.robot_id=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_game_robot_status_t.robot_level=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];
@@ -616,7 +617,7 @@ static uint16_t CP_data_deal(void)
 						CP.ext_game_robot_status_t.mains_power_chassis_output=(CP_rev_buf_point[26+5+2+CP_rev_buf_tempindex]&0x02)>>1;
 						CP.ext_game_robot_status_t.mains_power_shooter_output=(CP_rev_buf_point[26+5+2+CP_rev_buf_tempindex]&0x04)>>2;
 						DUM_Connect_time = micros() + 1000000;
-					break;//»úÆ÷ÈË×´Ì¬Êý¾Ý£¬10HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£ºµ¥Ò»»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½Ý£ï¿½10Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0202:
 						CP.ext_power_heat_data_t.chassis_volt=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_power_heat_data_t.chassis_current=CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];
@@ -625,37 +626,37 @@ static uint16_t CP_data_deal(void)
 						CP.ext_power_heat_data_t.shooter_id1_17mm_cooling_heat=CP_rev_buf_point[11+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[10+5+2+CP_rev_buf_tempindex];
 						CP.ext_power_heat_data_t.shooter_id2_17mm_cooling_heat=CP_rev_buf_point[13+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[12+5+2+CP_rev_buf_tempindex];
 						CP.ext_power_heat_data_t.shooter_id1_42mm_cooling_heat=CP_rev_buf_point[15+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[14+5+2+CP_rev_buf_tempindex];
-					break;//ÊµÊ±¹¦ÂÊÈÈÁ¿Êý¾Ý£¬50HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£ºµ¥Ò»»úÆ÷ÈË
+					break;//ÊµÊ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½50Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0203:
 						memcpy((void *)&CP.ext_game_robot_pos_t.x, (void *)&CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex], sizeof(CP.ext_game_robot_pos_t.x));
 						memcpy((void *)&CP.ext_game_robot_pos_t.y, (void *)&CP_rev_buf_point[4+5+2+CP_rev_buf_tempindex], sizeof(CP.ext_game_robot_pos_t.y));
 						memcpy((void *)&CP.ext_game_robot_pos_t.z, (void *)&CP_rev_buf_point[8+5+2+CP_rev_buf_tempindex], sizeof(CP.ext_game_robot_pos_t.z));
 						memcpy((void *)&CP.ext_game_robot_pos_t.yaw, (void *)&CP_rev_buf_point[12+5+2+CP_rev_buf_tempindex], sizeof(CP.ext_game_robot_pos_t.yaw));
-					break;//»úÆ÷ÈËÎ»ÖÃÊý¾Ý£¬10Hz·¢ËÍ£¬·¢ËÍ·¶Î§£ºµ¥Ò»»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½10Hzï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0204:
 						CP.ext_buff_t.power_rune_buff=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
-					break;//»úÆ÷ÈËÔöÒæÊý¾Ý£¬1HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£ºµ¥Ò»»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½1Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0205:
 						CP.aerial_robot_energy_t.attack_time=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
-					break;//¿ÕÖÐ»úÆ÷ÈËÄÜÁ¿×´Ì¬Êý¾Ý£¬10HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£ºµ¥Ò»»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½Ý£ï¿½10Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0206:
 						CP.ext_robot_hurt_t.armor_id=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex]&0x0f;
 						CP.ext_robot_hurt_t.hurt_type=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex]>>4;
-					break;//ÉËº¦×´Ì¬Êý¾Ý£¬ÉËº¦·¢Éúºó·¢ËÍ£¬·¢ËÍ·¶Î§£ºµ¥Ò»»úÆ÷ÈË
+					break;//ï¿½Ëºï¿½×´Ì¬ï¿½ï¿½ï¿½Ý£ï¿½ï¿½Ëºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0207:
-						CP.ext_shoot_data_t.bullet_type=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];//×Óµ¯ÀàÐÍ
-						CP.ext_shoot_data_t.shooter_id=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];//·¢Éä»ú¹¹ID
-						CP.ext_shoot_data_t.bullet_freq=CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];//×Óµ¯ÉäÆµ
+						CP.ext_shoot_data_t.bullet_type=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];//ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½
+						CP.ext_shoot_data_t.shooter_id=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ID
+						CP.ext_shoot_data_t.bullet_freq=CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];//ï¿½Óµï¿½ï¿½ï¿½Æµ
 						memcpy((void *)&CP.ext_shoot_data_t.bullet_speed, (void *)&CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex], sizeof(CP.ext_shoot_data_t.bullet_speed));
-					break;//ÊµÊ±Éä»÷Êý¾Ý£¬×Óµ¯·¢Éäºó·¢ËÍ£¬·¢ËÍ·¶Î§£ºµ¥Ò»»úÆ÷ÈË
+					break;//ÊµÊ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0208:
 						CP.ext_bullet_remaining_t.bullet_remaining_num_17mm=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_bullet_remaining_t.bullet_remaining_num_42mm=CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];
 						CP.ext_bullet_remaining_t.coin_remaining_num=CP_rev_buf_point[5+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[4+5+2+CP_rev_buf_tempindex];
-					break;//×Óµ¯Ê£Óà·¢ÉäÊý£¬10HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£ºµ¥Ò»»úÆ÷ÈË
+					break;//ï¿½Óµï¿½Ê£ï¿½à·¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½10Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0209:
 						CP.ext_rfid_status_t.rfid_status=CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex]<<24|CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex]<<16|CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
-					break;//»úÆ÷ÈËRFID×´Ì¬£¬1HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£ºµ¥Ò»»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½RFID×´Ì¬ï¿½ï¿½1Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x020A:
 						CP.ext_dart_client_cmd_t.dart_launch_opening_status=CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_dart_client_cmd_t.dart_attack_target=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];
@@ -667,21 +668,21 @@ static uint16_t CP_data_deal(void)
 //						CP.ext_dart_client_cmd_t.third_dart_speed=CP_rev_buf_point[6+5+2+CP_rev_buf_tempindex];
 //						CP.ext_dart_client_cmd_t.fourth_dart_speed=CP_rev_buf_point[7+5+2+CP_rev_buf_tempindex];
 //						CP.ext_dart_client_cmd_t.last_dart_launch_time=CP_rev_buf_point[9+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[8+5+2+CP_rev_buf_tempindex];
-					break;//·ÉïÚ»úÆ÷ÈË¿Í»§¶ËÖ¸ÁîÊý¾Ý£¬10HzÖÜÆÚ·¢ËÍ£¬·¢ËÍ·¶Î§£ºµ¥Ò»»úÆ÷ÈË
+					break;//ï¿½ï¿½ï¿½Ú»ï¿½ï¿½ï¿½ï¿½Ë¿Í»ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½10Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½Í·ï¿½Î§ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0301:
 						CP.ext_student_interactive_header_data_t.data_cmd_id=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_student_interactive_header_data_t.send_ID=CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];
 						CP.ext_student_interactive_header_data_t.receiver_ID=CP_rev_buf_point[5+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[4+5+2+CP_rev_buf_tempindex];
 						uint16_t temp_cnt;
 						for(temp_cnt=0;temp_cnt<CP.frame_header.data_length-6;temp_cnt++) CP.robot_interactive_data_t.data[CP.frame_header.data_length-6-1-temp_cnt] = CP_rev_buf_point[temp_cnt+6+5+2+CP_rev_buf_tempindex];
-					break;//»úÆ÷ÈË¼ä½»»¥Êý¾Ý£¬·¢ËÍ·½´¥·¢·¢ËÍ£¬ÉÏÏÞ10Hz
+					break;//ï¿½ï¿½ï¿½ï¿½ï¿½Ë¼ä½»ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½10Hz
 					case 0x0303:
 						memcpy((void *)&CP.ext_robot_command_t.target_position_x, (void *)&CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex], sizeof(CP.ext_robot_command_t.target_position_x));
 						memcpy((void *)&CP.ext_robot_command_t.target_position_y, (void *)&CP_rev_buf_point[4+5+2+CP_rev_buf_tempindex], sizeof(CP.ext_robot_command_t.target_position_y));
 						memcpy((void *)&CP.ext_robot_command_t.target_position_z, (void *)&CP_rev_buf_point[8+5+2+CP_rev_buf_tempindex], sizeof(CP.ext_robot_command_t.target_position_z));
 						CP.ext_robot_command_t.commd_keyboard=CP_rev_buf_point[12+5+2+CP_rev_buf_tempindex];
 						CP.ext_robot_command_t.target_robot_ID=CP_rev_buf_point[14+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[13+5+2+CP_rev_buf_tempindex];
-					break;//Ð¡µØÍ¼ÏÂ·¢ÐÅÏ¢£¬´¥·¢Ê±·¢ËÍ
+					break;//Ð¡ï¿½ï¿½Í¼ï¿½Â·ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
 					case 0x0304:
 						CP.ext_robot_vision_command_t.mouse_x=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_robot_vision_command_t.mouse_y=CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];
@@ -689,12 +690,12 @@ static uint16_t CP_data_deal(void)
 						CP.ext_robot_vision_command_t.left_button_down=CP_rev_buf_point[6+5+2+CP_rev_buf_tempindex];
 						CP.ext_robot_vision_command_t.right_button_down=CP_rev_buf_point[7+5+2+CP_rev_buf_tempindex];
 						CP.ext_robot_vision_command_t.keyboard_value=CP_rev_buf_point[9+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[8+5+2+CP_rev_buf_tempindex];
-					break;//Í¼´«Ò£¿ØÐÅÏ¢£¬30HzÖÜÆÚ·¢ËÍ
+					break;//Í¼ï¿½ï¿½Ò£ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½30Hzï¿½ï¿½ï¿½Ú·ï¿½ï¿½ï¿½
 					case 0x0305:
 						CP.ext_client_map_command_t.target_robot_ID=CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.ext_client_map_command_t.target_position_x=CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];
 						CP.ext_client_map_command_t.target_position_y=CP_rev_buf_point[6+5+2+CP_rev_buf_tempindex];
-					break;//Ð¡µØÍ¼½ÓÊÕÐÅÏ¢£¬10HzÖÜÆÚ½ÓÊÕ
+					break;//Ð¡ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½10Hzï¿½ï¿½ï¿½Ú½ï¿½ï¿½ï¿½
 					case 0x020B:
 						memcpy((void *)&CP.ground_robot_position_t.hero_x, (void *)&CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex], sizeof(CP.ground_robot_position_t.hero_x));
 						memcpy((void *)&CP.ground_robot_position_t.hero_y, (void *)&CP_rev_buf_point[4+5+2+CP_rev_buf_tempindex], sizeof(CP.ground_robot_position_t.hero_y));
@@ -706,7 +707,7 @@ static uint16_t CP_data_deal(void)
 						memcpy((void *)&CP.ground_robot_position_t.standard_4_y, (void *)&CP_rev_buf_point[28+5+2+CP_rev_buf_tempindex], sizeof(CP.ground_robot_position_t.standard_4_y));
 						memcpy((void *)&CP.ground_robot_position_t.standard_5_x, (void *)&CP_rev_buf_point[32+5+2+CP_rev_buf_tempindex], sizeof(CP.ground_robot_position_t.standard_5_x));
 						memcpy((void *)&CP.ground_robot_position_t.standard_5_y, (void *)&CP_rev_buf_point[36+5+2+CP_rev_buf_tempindex], sizeof(CP.ground_robot_position_t.standard_5_y));
-					break;//¼º·½»úÆ÷ÈËÎ»ÖÃ×ø±ê
+					break;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x020C:
 						CP.radar_mark_data_t.mark_hero_progress 			= CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.radar_mark_data_t.mark_engineer_progress 	= CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];
@@ -714,18 +715,18 @@ static uint16_t CP_data_deal(void)
 						CP.radar_mark_data_t.mark_standard_4_progress = CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex];
 						CP.radar_mark_data_t.mark_standard_5_progress = CP_rev_buf_point[4+5+2+CP_rev_buf_tempindex];
 						CP.radar_mark_data_t.mark_sentry_progress 		= CP_rev_buf_point[5+5+2+CP_rev_buf_tempindex];
-					break;//¶Ô·½»úÆ÷ÈË±»±ê¼Ç½ø¶È
+					break;//ï¿½Ô·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë±ï¿½ï¿½ï¿½Ç½ï¿½ï¿½ï¿½
 					case 0x0302:
 						CP.custom_client_data_t.key_value = CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.custom_client_data_t.x_position = CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex];
 						CP.custom_client_data_t.mouse_left = CP_rev_buf_point[3+5+2+CP_rev_buf_tempindex];
 						CP.custom_client_data_t.y_position = CP_rev_buf_point[4+5+2+CP_rev_buf_tempindex];
 						CP.custom_client_data_t.mouse_right = CP_rev_buf_point[5+5+2+CP_rev_buf_tempindex];					
-						CP.custom_client_data_t.reserved = CP_rev_buf_point[7+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[6+5+2+CP_rev_buf_tempindex];//±£ÁôÎ»
-					break;//×Ô¶¨Òå¿ØÖÆÆ÷
+						CP.custom_client_data_t.reserved = CP_rev_buf_point[7+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[6+5+2+CP_rev_buf_tempindex];//ï¿½ï¿½ï¿½ï¿½Î»
+					break;//ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 					case 0x0306:
 						
-					break;//×Ô¶¨Òå¿ØÖÆÆ÷Ä£Äâ¼üÊó²Ù×÷Ñ¡ÊÖ¶Ë¡£					
+					break;//ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½Ö¶Ë¡ï¿½					
 					case 0x0307:
 						CP.map_sentry_data_t.intention = CP_rev_buf_point[0+5+2+CP_rev_buf_tempindex];
 						CP.map_sentry_data_t.start_position_x = CP_rev_buf_point[2+5+2+CP_rev_buf_tempindex]<<8|CP_rev_buf_point[1+5+2+CP_rev_buf_tempindex];
@@ -746,34 +747,10 @@ static uint16_t CP_data_deal(void)
 	return 0;
 }
 
+// DJI-CRC8(ç®—æ³•C)å·²æ”¶çº³è¿›ç»Ÿä¸€ crc æ¨¡å—ã€‚ä¿ç•™åŽŸç­¾å,ä»…è½¬è°ƒ crc_dji8ã€‚
 static unsigned char Get_CRC8_Check_Sum(unsigned char *pchMessage,unsigned int dwLength) 
 { 
-	unsigned char ucCRC8 = 0xff;
-	unsigned char ucIndex; 
-	static const unsigned char CRC8_TAB[256] = { 0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83, 0xc2,
-	0x9c, 0x7e, 0x20, 0xa3, 0xfd, 0x1f, 0x41, 0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e,
-	0x5f, 0x01, 0xe3, 0xbd, 0x3e, 0x60, 0x82, 0xdc, 0x23, 0x7d, 0x9f, 0xc1, 0x42, 0x1c, 0xfe,
-	0xa0, 0xe1, 0xbf, 0x5d, 0x03, 0x80, 0xde, 0x3c, 0x62, 0xbe, 0xe0, 0x02, 0x5c, 0xdf, 0x81,
-	0x63, 0x3d, 0x7c, 0x22, 0xc0, 0x9e, 0x1d, 0x43, 0xa1, 0xff, 0x46, 0x18, 0xfa, 0xa4, 0x27,
-	0x79, 0x9b, 0xc5, 0x84, 0xda, 0x38, 0x66, 0xe5, 0xbb, 0x59, 0x07, 0xdb, 0x85, 0x67, 0x39,
-	0xba, 0xe4, 0x06, 0x58, 0x19, 0x47, 0xa5, 0xfb, 0x78, 0x26, 0xc4, 0x9a, 0x65, 0x3b, 0xd9,
-	0x87, 0x04, 0x5a, 0xb8, 0xe6, 0xa7, 0xf9, 0x1b, 0x45, 0xc6, 0x98, 0x7a, 0x24, 0xf8, 0xa6,
-	0x44, 0x1a, 0x99, 0xc7, 0x25, 0x7b, 0x3a, 0x64, 0x86, 0xd8, 0x5b, 0x05, 0xe7, 0xb9, 0x8c,
-	0xd2, 0x30, 0x6e, 0xed, 0xb3, 0x51, 0x0f, 0x4e, 0x10, 0xf2, 0xac, 0x2f, 0x71, 0x93, 0xcd,
-	0x11, 0x4f, 0xad, 0xf3, 0x70, 0x2e, 0xcc, 0x92, 0xd3, 0x8d, 0x6f, 0x31, 0xb2, 0xec, 0x0e,
-	0x50, 0xaf, 0xf1, 0x13, 0x4d, 0xce, 0x90, 0x72, 0x2c, 0x6d, 0x33, 0xd1, 0x8f, 0x0c, 0x52,
-	0xb0, 0xee, 0x32, 0x6c, 0x8e, 0xd0, 0x53, 0x0d, 0xef, 0xb1, 0xf0, 0xae, 0x4c, 0x12, 0x91,
-	0xcf, 0x2d, 0x73, 0xca, 0x94, 0x76, 0x28, 0xab, 0xf5, 0x17, 0x49, 0x08, 0x56, 0xb4, 0xea,
-	0x69, 0x37, 0xd5, 0x8b, 0x57, 0x09, 0xeb, 0xb5, 0x36, 0x68, 0x8a, 0xd4, 0x95, 0xcb, 0x29,
-	0x77, 0xf4, 0xaa, 0x48, 0x16, 0xe9, 0xb7, 0x55, 0x0b, 0x88, 0xd6, 0x34, 0x6a, 0x2b, 0x75,
-	0x97, 0xc9, 0x4a, 0x14, 0xf6, 0xa8, 0x74, 0x2a, 0xc8, 0x96, 0x15, 0x4b, 0xa9, 0xf7, 0xb6,
-	0xe8, 0x0a, 0x54, 0xd7, 0x89, 0x6b, 0x35}; 
-	while (dwLength--) 
-	{ 
-		ucIndex = ucCRC8^(*pchMessage++); 
-		ucCRC8 = CRC8_TAB[ucIndex]; 
-	} 
-	return(ucCRC8); 
+	return crc_dji8((const uint8_t *)pchMessage, (uint32_t)dwLength); 
 }
 static void Append_CRC8_Check_Sum(unsigned char *pchMessage, unsigned int dwLength)
 {
