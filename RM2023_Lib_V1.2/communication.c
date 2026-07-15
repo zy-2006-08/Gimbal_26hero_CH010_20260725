@@ -1,6 +1,7 @@
 #include "communication.h"
 #include "my_math.h" 
 #include "RM_Lib.h" 
+#include "crc.h"
 uint8_t Mini_PC_info_ubuf[MINI_PC_BUF_SIZE];
 uint8_t Mini_PC_tx_buf[128];
 uint8_t Mini_PC_rx_buf[128];
@@ -50,15 +51,10 @@ bool check_crc16(const uint8_t * data, uint32_t len)
     return get_crc16(data, len - 3) == crc16;
 }
 
+// Mini_PC 旧 CRC8(算法D)已收纳进统一 crc 模块。保留原签名,仅转调 crc_minipc8。
 uint8_t cal_crc_table(uint8_t *ptr, uint8_t len)
 {
-  uint8_t crc = 0x00;
-
-  while (len--)
-  {
-    crc = crc_table[crc ^ *ptr++]; // ���XOR������
-  }
-  return (crc);
+  return crc_minipc8(ptr, len);
 }
 
 #if Communication_Mode == Communication_huart
