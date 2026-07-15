@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "cmake --build --preset Debug",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "flash",
+            "type": "shell",
+            "command": "openocd -f openocd.cfg -c \"program build/Debug/Gimbal_Demo.elf verify reset exit\"",
+            "problemMatcher": []
+        },
+        {
+            "label": "build and flash",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "build",
+                "flash"
+            ],
+            "problemMatcher": []
+        }
+    ]
+}

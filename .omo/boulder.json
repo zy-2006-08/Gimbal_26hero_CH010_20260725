@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "active_work_id": "tune-2006-lift-pid-ffbfe1b9",
+  "works": {
+    "tune-2006-lift-pid-ffbfe1b9": {
+      "work_id": "tune-2006-lift-pid-ffbfe1b9",
+      "active_plan": "D:\\RMUC2026\\Gimbal_24hero_CH010_20260120\\Gimbal_24hero_CH010_20260111\\.omo\\plans\\tune-2006-lift-pid.md",
+      "plan_name": "tune-2006-lift-pid",
+      "status": "active",
+      "started_at": "2026-07-15T06:39:05.530Z",
+      "updated_at": "2026-07-15T06:52:48.937Z",
+      "session_ids": [
+        "opencode:ses_09b9a4e45ffej53rlySCQmRh6j"
+      ],
+      "session_origins": {
+        "opencode:ses_09b9a4e45ffej53rlySCQmRh6j": "direct"
+      },
+      "agent": "atlas",
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "main.c: 接通2006电机输出 + 位置目标行程clamp + 上电保护",
+          "session_id": "opencode:ses_09b7a9aeeffeSfzLM7XK1lvPQt",
+          "agent": "Sisyphus-Junior",
+          "category": "ultrabrain",
+          "started_at": "2026-07-15T06:42:41.846Z",
+          "status": "running",
+          "updated_at": "2026-07-15T06:52:48.938Z"
+        }
+      }
+    }
+  },
+  "active_plan": "D:\\RMUC2026\\Gimbal_24hero_CH010_20260120\\Gimbal_24hero_CH010_20260111\\.omo\\plans\\tune-2006-lift-pid.md",
+  "started_at": "2026-07-15T06:39:05.530Z",
+  "status": "active",
+  "updated_at": "2026-07-15T06:52:48.937Z",
+  "session_ids": [
+    "opencode:ses_09b9a4e45ffej53rlySCQmRh6j"
+  ],
+  "session_origins": {
+    "opencode:ses_09b9a4e45ffej53rlySCQmRh6j": "direct"
+  },
+  "plan_name": "tune-2006-lift-pid",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "main.c: 接通2006电机输出 + 位置目标行程clamp + 上电保护",
+      "session_id": "opencode:ses_09b7a9aeeffeSfzLM7XK1lvPQt",
+      "agent": "Sisyphus-Junior",
+      "category": "ultrabrain",
+      "started_at": "2026-07-15T06:42:41.846Z",
+      "status": "running",
+      "updated_at": "2026-07-15T06:52:48.938Z"
+    }
+  },
+  "agent": "atlas"
+}
