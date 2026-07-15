@@ -32,7 +32,6 @@ extern uint8_t info_ubuf[USART_BUF_SIZE];
 // uint8_t INFO_DMA(const char *fmt, ...);
 
 /**************************************** CRC **********************************************************/
-extern const uint16_t crctab16[];
 extern uint16_t GetCrc16(const unsigned char *pData, uint16_t nLength); // 计算给定长度数据的16位CRC。
 extern bool IsCrc16Good(const unsigned char *pData, uint16_t nLength);  // 检查给定长度数据的16位CRC是否正确。
 
