@@ -27,20 +27,10 @@ uint8_t c[4];
 #include "main.h"
 #include "stdio.h"
 
-// 计算CRC16校验值
+// 计算CRC16校验值(DJI-CRC16,算法B)已收纳进统一 crc 模块,保留原签名仅转调 crc_dji16。
 uint16_t get_crc16(const uint8_t * data, uint32_t len)
 {
-    uint16_t crc16 = CRC16_INIT;
-    uint8_t byte;
-    uint8_t i;
-
-    while (len--) {
-        byte = *data++;
-        i = (crc16 ^ byte) & 0x00ff;
-        crc16 = (crc16 >> 8) ^ CRC16_TABLE[i];
-    }
-
-    return crc16;
+    return crc_dji16(data, len);
 }
 
 // 校验CRC16
