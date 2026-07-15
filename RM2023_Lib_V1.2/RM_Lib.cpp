@@ -2335,33 +2335,8 @@ void RC::fill_data(void)
 //     return (float)res;
 // }
 
-bool RC::verify_crc16_check_sum(uint8_t *p_msg, uint16_t len)
-{
-    uint16_t w_expected = 0;
-
-    if ((p_msg == NULL) || (len <= 2)) {
-        return false;
-    }
-    w_expected = this->get_crc16_check_sum(p_msg, len - 2, crc16_init);
-
-    return ((w_expected & 0xff) == p_msg[len - 2] && ((w_expected >> 8) & 0xff) == p_msg[len - 1]);
-}
-
-uint16_t RC::get_crc16_check_sum(uint8_t *p_msg, uint16_t len, uint16_t crc16)
-{
-    uint8_t data;
-
-    if (p_msg == NULL) {
-        return 0xffff;
-    }
-
-    while (len--) {
-        data    = *p_msg++;
-        (crc16) = ((uint16_t)(crc16) >> 8) ^ crc16_tab[((uint16_t)(crc16) ^ (uint16_t)(data)) & 0x00ff];
-    }
-
-    return crc16;
-}
+// RC::verify_crc16_check_sum / RC::get_crc16_check_sum 为死代码(原注释已标"没用",全工程零调用),已删除。
+// 如需 DJI-CRC16 请使用统一 crc 模块的 crc_dji16()。
 
 /*******************************************************ADXRS290*******************************************************************/
 #ifdef __SPI_H__
