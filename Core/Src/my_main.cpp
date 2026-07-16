@@ -37,16 +37,16 @@ uint8_t a,b,c,d,e,f,g,h,o,p;
 #define MCL_KP 20.0F
 uint32_t counter;
 uint8_t XTL_flag = 0;
-#define Laser_ON HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET) // 锟?鍏夊紑
+#define Laser_ON HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET) // �?光开
 #define Laser_OFF HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET)
-// 璁℃暟锟?
+// 计数�?
 uint8_t p_cnt, y_cnt, bp_cnt, mcl_cnt, zm_cnt, js_cnt,bj,imu_cnt,zm_press1,zm_press2,m2006_cnt,duoji;
-/********   鎺у埗妯″紡   **********/
+/********   控制模式   **********/
 #define PROTECT_MODE 0
 #define GYRO_MODE 2
 #define MANG_MODE 1
 #define SPEED_MODE 3
-#define DUZHUAN_MODE 5 // 2006涓婄數鍫佃浆璁颁綅缃?
+#define DUZHUAN_MODE 5 // 2006上电堵转记位置
 #define DISABLE_MODE 0
 #define ENABLE_MODE 4
 #define ZM_MODE 5
@@ -63,10 +63,10 @@ uint8_t p_cnt, y_cnt, bp_cnt, mcl_cnt, zm_cnt, js_cnt,bj,imu_cnt,zm_press1,zm_pr
 
 uint8_t MYmode = PROTECT_MODE;
 
-/********   鐢垫満   **********/
+/********   电机   **********/
 USER_CAN CAN_1(&hcan1, 0), CAN_2(&hcan2, 1);
 MOTOR_RM  BoPan(0x201, &CAN_2),Mini_Pitch_2006(0x202, &CAN_2);
-int16_t Mini_Pitch_output = 0; // Mini_Pitch鐢垫満鐢垫祦杈撳嚭锛堜緵閬ユ祴浣跨敤锛屾枃浠朵綔鐢ㄥ煙锛?
+int16_t Mini_Pitch_output = 0; // Mini_Pitch电机电流输出（供遥测使用，文件作用域）
 
 MOTOR_RM  Motor_MCL_UP_up(0x202, &CAN_1), 
 					Motor_MCL_R(0x203, &CAN_1),         
@@ -75,7 +75,7 @@ MOTOR_RM  Motor_MCL_UP_up(0x202, &CAN_1),
 					Motor_MCL_UP(0x205, &CAN_1),        
 					Motor_MCL_LL(0x204, &CAN_1);       
 
-MOTOR_LK Motor_LK6010_Pitch(0X141, &CAN_2), Motor_LK6010_Yaw(0x142, &CAN_2); // LK6010鐢垫満 Pitch鍜孻aw+
+MOTOR_LK Motor_LK6010_Pitch(0X141, &CAN_2), Motor_LK6010_Yaw(0x142, &CAN_2); // LK6010电机 Pitch和Yaw+
 
 PID_class PID_Mini_Pitch_2006_mang(0.6, 0, 0, 30000, 0, 30000, 16000, 0,0), // 0.178, 0, 0, 30000, 0, 0, 30000, 0,0                       
           PID_Mini_Pitch_2006_sp(0.6, 0, 0, 30000, 0, 0, 10000, 0, 0); // 1.5  C610 ESC max current cmd +-10000; was 10, 0, 0, 16000, 0, 0, 16000, 0, 0
@@ -83,10 +83,10 @@ PID_class PID_Mini_Pitch_2006_mang(0.6, 0, 0, 30000, 0, 30000, 16000, 0,0), // 0
 PID_class PID_BP_mang(0.6f, 0, 0, 30000, 0, 0, 30000, 0,0), // 0.6f, 0, 0, 30000, 0, 0, 30000, 0,0
           PID_BP_sp(20, 0, 0, 16000, 0, 0, 16000, 0, 0); // 20, 0, 0, 16000, 0, 0, 16000, 0, 0
           
-PID_class PID_MCL_UP_sp(MCL_KP, 0, 0, 16000, 0, 0, 16000, 0,0), // 涓婅疆閫熷害PID
-          PID_MCL_R_sp(MCL_KP, 0, 0, 16000, 0, 0, 16000, 0,0), // 鍙宠疆閫熷害PID
-          PID_MCL_L_sp(MCL_KP, 0, 0, 16000, 0, 0, 19000, 0,0), // 宸﹁疆閫熷害PID
-          PID_MCL_RR_sp(MCL_KP, 0, 0, 16000, 0, 0, 19000, 0, 0),   // 鍙冲悗锟? sp+
+PID_class PID_MCL_UP_sp(MCL_KP, 0, 0, 16000, 0, 0, 16000, 0,0), // 上轮速度PID
+          PID_MCL_R_sp(MCL_KP, 0, 0, 16000, 0, 0, 16000, 0,0), // 右轮速度PID
+          PID_MCL_L_sp(MCL_KP, 0, 0, 16000, 0, 0, 19000, 0,0), // 左轮速度PID
+          PID_MCL_RR_sp(MCL_KP, 0, 0, 16000, 0, 0, 19000, 0, 0),   // 右后�? sp+
           PID_MCL_UPUP_sp(MCL_KP, 0, 0, 16000, 0, 0, 19000, 0, 0), // 涓婅疆 sp-20
           PID_MCL_LL_sp(MCL_KP, 0, 0, 16000, 0, 0, 19000, 0, 0);   // 宸﹀悗锟? sp-
 
@@ -104,21 +104,17 @@ PID_class PID_Yaw_mang(12, 0, 0, 500, 100, 0, 500, 50, 0), //7, 0, 0, 500, 100, 
           PID_YAW_Erro_IMU_MANG(12, 0.12, 0, 500, 100, 0, 500, 0.06,50), //13, 0.07, 200, 500, 100, 0, 500, 0.1,50
           PID_YAW_Erro_IMU_GYRO(4, 0, 0, 400, 0, 0, 500, 0,0); // 9, 0, 0, 400, 0, 0, 500, 0,0
 
-// 云台单轴 GYRO 双环 PID(Gimbal_Zhou):配置一行到位,与 MOTOR_RM 风格一致。
-//   YAW  : 内环带LP(true),外环反馈 continuous_yaw,内环反馈 gyr[2],输出 -1
-//   PITCH: 内环不带LP(false),外环反馈 hi91.pitch,内环反馈 gyr[0],输出 -1(重力补偿保持关闭)
+// 云台单轴双环 PID(Gimbal_Zhou):配置一行到位,风格同 MOTOR_RM。
+//   参数序: GYRO常规组(外,内) GYRO自瞄组(外,内) MANG组(外,内) 外环角度反馈 内环角速度反馈 符号 GYRO内环是否LP
+//   YAW  : GYRO内环带LP(true), 外环反馈 continuous_yaw, 内环反馈 gyr[2], 符号 -1
+//   PITCH: GYRO内环不带LP(false),外环反馈 hi91.pitch,   内环反馈 gyr[0], 符号 -1 (重力补偿保持关闭)
 Gimbal_Zhou Yaw_calc(&PID_Yaw_mang, &PID_Yaw_sp, &PID_Yaw_mang_zm, &PID_Yaw_sp_zm,
+                     &PID_YAW_Erro_IMU_MANG, &PID_YAW_Erro_IMU_GYRO,
                      &yaw_cont.continuous_yaw, &hipnuc_raw.hi91.gyr[2], -1.0f, true);
+
 Gimbal_Zhou Pitch_calc(&PID_LK_Pitch_Mang, &PID_LK_Pitch_SP, &PID_LK_Pitch_Mang_zm, &PID_LK_Pitch_SP_zm,
+                       &PID_LK_Erro_Pitch_IMU_MANG, &PID_LK_Erro_Pitch_IMU_Gyro,
                        &hipnuc_raw.hi91.pitch, &hipnuc_raw.hi91.gyr[0], -1.0f, false);
-					
-/*pitch鎷х揣鍙傛暟*/		
-//PID_class PID_LK_Pitch_Mang(18, 0, 0, 240, 1, 1, 240, 250, 50), //18, 0, 0, 240, 1, 1, 240, 250, 50
-//          PID_LK_Pitch_SP(8, 0, 0, 600, 0, 0, 600, 0, 0), //8, 0, 0, 600, 0, 0, 600, 0, 0
-//          PID_LK_Pitch_Mang_zm(13, 0.03, 0, 240, 100, 1, 240, 0.12, 50), //13, 0.03, 0, 240, 100, 1, 240, 0.12, 50
-//          PID_LK_Pitch_SP_zm(8, 0, 0, 600, 0, 0, 600, 0, 0), //8, 0, 0, 600, 0, 0, 600, 0, 0
-//          PID_LK_Erro_Pitch_IMU_MANG(32, 0.15, 0, 240, 500, 1, 240, 0.05, 50), //18, 0, 0, 240, 1, 1, 240, 250, 50
-//          PID_LK_Erro_Pitch_IMU_Gyro(10, 0, 0, 600, 0, 0, 600, 0, 0); //8, 0, 0, 600, 0, 0, 600, 0, 0
 
 Vision_LPF V_Pitch(30, 0.001, 3.1415926f);
 Vision_LPF V_Yaw(30, 0.001, 3.1415926f);
@@ -133,50 +129,50 @@ RGB_UI RGB_UI(&htim3,TIM_CHANNEL_3,"put the Update function in 800kHz interrupt"
 //RGB_UI RGB_UI(&htim4,TIM_CHANNEL_4,"put the Update function in 800kHz interrupt");
 //RGB_UI RGB_UI(&htim3,TIM_CHANNEL_1,"put the Update function in 800kHz interrupt");
 
-// ========== RGB Debug 鐩稿叧鍙橀噺 ==========
-#define RGB_goal 225  // WS2812浜害鍊?
+// ========== RGB Debug 相关变量 ==========
+#define RGB_goal 225  // WS2812亮度值
 
-// 瓒呮椂璁℃暟鍣紙鐢ㄤ簬璁惧鏁呴殰妫€娴嬶紝50Hz涓?0娆?200ms锛?
-uint8_t timeout_pitch = 0;      // Pitch鐢垫満瓒呮椂璁℃暟
-uint8_t timeout_yaw = 0;        // Yaw鐢垫満瓒呮椂璁℃暟
-uint8_t timeout_bopan = 0;      // 鎷ㄧ洏鐢垫満瓒呮椂璁℃暟
-uint8_t timeout_mcl_up = 0;     // 涓婃懇鎿﹁疆瓒呮椂璁℃暟
-uint8_t timeout_mcl_r = 0;      // 鍙虫懇鎿﹁疆瓒呮椂璁℃暟
+// 超时计数器（用于设备故障检测，50Hz下10次=200ms）
+uint8_t timeout_pitch = 0;      // Pitch电机超时计数
+uint8_t timeout_yaw = 0;        // Yaw电机超时计数
+uint8_t timeout_bopan = 0;      // 拨盘电机超时计数
+uint8_t timeout_mcl_up = 0;     // 上摩擦轮超时计数
+uint8_t timeout_mcl_r = 0;      // 右摩擦轮超时计数
 uint8_t timeout_mcl_l = 0;      // 宸︽懇鎿﹁疆瓒呮椂璁℃暟
-uint8_t timeout_mcl_rr = 0;     // 鍙冲悗鎽╂摝杞秴鏃惰鏁?
-uint8_t timeout_mcl_ll = 0;     // 宸﹀悗鎽╂摝杞秴鏃惰鏁?
-uint8_t timeout_mcl_upup = 0;   // 涓婁笂鎽╂摝杞秴鏃惰鏁?
+uint8_t timeout_mcl_rr = 0;     // 右后摩擦轮超时计数
+uint8_t timeout_mcl_ll = 0;     // 左后摩擦轮超时计数
+uint8_t timeout_mcl_upup = 0;   // 上上摩擦轮超时计数
 uint8_t timeout_imu = 0;        // 浜戝彴IMU瓒呮椂璁℃暟
-uint8_t timeout_mini_pitch = 0; // Mini Pitch 2006鐢垫満瓒呮椂璁℃暟
+uint8_t timeout_mini_pitch = 0; // Mini Pitch 2006电机超时计数
 
-// 搴曠洏璁惧鐘舵€佹爣蹇椾綅锛堜粠搴曠洏鏉块€氳繃CAN鎺ユ敹锛?
-uint8_t Chassis_Motor_M1_OK = 0;   // 搴曠洏鐢垫満M1鐘舵€侊紙0x201锛?
-uint8_t Chassis_Motor_M2_OK = 0;   // 搴曠洏鐢垫満M2鐘舵€侊紙0x202锛?
-uint8_t Chassis_Motor_M3_OK = 0;   // 搴曠洏鐢垫満M3鐘舵€侊紙0x203锛?
-uint8_t Chassis_Motor_M4_OK = 0;   // 搴曠洏鐢垫満M4鐘舵€侊紙0x204锛?
-uint8_t Chassis_IMU_OK = 0;        // 搴曠洏IMU鐘舵€?
-uint8_t Chassis_REF_OK = 0;        // 瑁佸垽绯荤粺杩炴帴鐘舵€?
+// 底盘设备状态标志位（从底盘板通过CAN接收）
+uint8_t Chassis_Motor_M1_OK = 0;   // 底盘电机M1状态（0x201）
+uint8_t Chassis_Motor_M2_OK = 0;   // 底盘电机M2状态（0x202）
+uint8_t Chassis_Motor_M3_OK = 0;   // 底盘电机M3状态（0x203）
+uint8_t Chassis_Motor_M4_OK = 0;   // 底盘电机M4状态（0x204）
+uint8_t Chassis_IMU_OK = 0;        // 底盘IMU状态
+uint8_t Chassis_REF_OK = 0;        // 裁判系统连接状态
 
-// 瓒呯數鐢靛帇鐩稿叧
-float V_Cap_Real = 0.0f;           // 瓒呯數鐢靛帇瀹為檯鍊?
-uint8_t V_Cap_OK_flag = 0;         // 瓒呯數鐢靛帇妫€鏌ユ爣蹇楋紙0=鏁呴殰锛岄潪0=姝ｅ父锛?
+// 超电电压相关
+float V_Cap_Real = 0.0f;           // 超电电压实际值
+uint8_t V_Cap_OK_flag = 0;         // 超电电压检查标志（0=故障，非0=正常）
 
-// RGB Debug API 閰嶇疆鍙橀噺
+// RGB Debug API 配置变量
 RGB_Debug_Config_t rgb_debug_config;
 LED_Mapping_t led_mappings[5];
 
-// 搴曠洏璁惧鐘舵€佹爣蹇椾綅瀹氫箟锛堟墿灞旸P_Tx_static_Flag锛岀敤浜嶤AN閫氫俊锛?
-#define CHASSIS_M1_OK_FLAG    ((uint16_t)0x0001 << 5)   // 搴曠洏鐢垫満0x201
-#define CHASSIS_M2_OK_FLAG    ((uint16_t)0x0001 << 6)   // 搴曠洏鐢垫満0x202
-#define CHASSIS_M3_OK_FLAG    ((uint16_t)0x0001 << 7)   // 搴曠洏鐢垫満0x203
-#define CHASSIS_M4_OK_FLAG    ((uint16_t)0x0001 << 8)   // 搴曠洏鐢垫満0x204
-#define CHASSIS_IMU_OK_FLAG   ((uint16_t)0x0001 << 9)   // 搴曠洏IMU
-#define CHASSIS_CAP_OK_FLAG   ((uint16_t)0x0001 << 10)  // 瓒呯骇鐢靛
-#define CHASSIS_REF_OK_FLAG   ((uint16_t)0x0001 << 11)  // 瑁佸垽绯荤粺
+// 底盘设备状态标志位定义(扩填进 DP_Tx_static_Flag, 用于 CAN 通信)
+#define CHASSIS_M1_OK_FLAG    ((uint16_t)0x0001 << 5)   // 底盘电机 0x201
+#define CHASSIS_M2_OK_FLAG    ((uint16_t)0x0001 << 6)   // 底盘电机 0x202
+#define CHASSIS_M3_OK_FLAG    ((uint16_t)0x0001 << 7)   // 底盘电机 0x203
+#define CHASSIS_M4_OK_FLAG    ((uint16_t)0x0001 << 8)   // 底盘电机 0x204
+#define CHASSIS_IMU_OK_FLAG   ((uint16_t)0x0001 << 9)   // 底盘 IMU
+#define CHASSIS_CAP_OK_FLAG   ((uint16_t)0x0001 << 10)  // 超级电容
+#define CHASSIS_REF_OK_FLAG   ((uint16_t)0x0001 << 11)  // 裁判系统
 
-/********  閫氫俊鏍囧織锟?   **********/
-uint16_t YT_Tx_static_Flag = 0, // 浜戝彴鍙戯拷?锟介潤鎬佹爣蹇椾綅bool
-    DP_Tx_static_Flag = 0;      // 搴曠洏鍙戯拷?锟介潤鎬佹爣蹇椾綅bool 0鍏抽棴 1锟?鍚簳鐩樿窡锟?
+/********  通信标志  **********/
+uint16_t YT_Tx_static_Flag = 0, // 云台发送静态标志位 bool
+    DP_Tx_static_Flag = 0;      // 底盘发送静态标志位 bool  0=关闭  1=开启底盘跟随
 bool turn_flag = 0;
 #define TURN_FLAG ((uint16_t)0x0001 << 0)
 uint16_t mine_flag = 0;
@@ -192,15 +188,15 @@ bool shoot_once_flag = 0;
 
 uint8_t jianshu_ctrl_flag = DISABLE_MODE;
 
-//锟?铻轰华鐘讹拷??
+//�?螺仪状�??
 uint8_t Pitch_088_state = BMI088_ERROR;
 
-// 鐢ㄤ簬鍒ゆ柇鐢垫満鏄惁閮芥帴鏀跺埌鏁版嵁锛岀敤浜庢帶鍒跺彂閫侀锟?
+// 用于判断电机是否都接收到数据，用于控制发送频�?
 uint8_t MCL_4_motorflag = 0, MCL_2_motorflag = 0;
 uint8_t can2_bjtx010 = 0, can2_bjtx011 = 0, can2bjtx013 = 0, can2bjtx014 = 0;
 uint8_t BP_protect_cansend_flag = 0, MCL_protect_cansend_200_flag = 0, MCL_protect_cansend_1FF_flag = 0;
 
-// 鎷ㄧ洏鐩稿叧
+// 拨盘相关
 union
 {
   float f_speed;
@@ -210,7 +206,7 @@ union
 float shoot_sp = 11.9;
 int16_t L_targe_sp, R_targe_sp, UP_targe_sp, RR_targe_sp, LL_targe_sp, UPUP_targe_sp;
 uint8_t MCL_Start_flag = 0;
-int16_t MCL_MID;                                                                       // 鎽╂摝杞腑锟?
+int16_t MCL_MID;                                                                       // 摩擦轮中�?
 int16_t MCL_MAX_Speed_Near = 5250, MCL_MAX_Speed_Far = 5200, MCL_MAX_Speed_Now = 3700; // 5170鏀逛负3750,3700锛?5200
 uint8_t MCL_ON_flag = 0;
 
@@ -219,26 +215,26 @@ uint8_t MCL_ON_flag = 0;
 uint8_t BP_MODE = PROTECT_MODE;
 int32_t BP_targe = 0, BP_calc_targe = 0;
 uint8_t BP_ON_flag = 0;
-bool Shoot_flag = 0; // 灏勫嚮鏍囧織锛岀敤浜庢帶鍒舵嫧鐩樿浆鍔ㄤ负0
+bool Shoot_flag = 0; // 射击标志，用于控制拨盘转动为0
 uint16_t Shoot_time = 0;
 float BP_Islow_incbuf = 0;
 int32_t targe_inc;
 UpDown_check_class UD_BoPan_ON(0), UD_BP_1(0);
 
-// Mini_Pitch_2006鎺у埗鍙橀噺
+// Mini_Pitch_2006控制变量
 uint8_t Mini_Pitch_MODE = PROTECT_MODE;
-int32_t Mini_Pitch_targe = 0;              // 褰撳墠鐩爣浣嶇疆
-int32_t Mini_Pitch_calc_targe = 0;         // 璁＄畻鐩爣浣嶇疆锛堢敤浜庡钩婊戣繃娓★級
-uint8_t Mini_Pitch_preset_flag = 0;        // 棰勭疆瑙﹀彂鏍囧織
-float Mini_Pitch_pwm_to_mang_ratio = 1.0f; // PWM鍒拌搴︾殑鏄犲皠姣斾緥锛堝彲璋冿級
-float Mini_Pitch_manual_speed = 5.0f;     // 鎵嬪姩鎺у埗閫熷害锛堢敤浜庤皟鍙傛ā寮忥級
+int32_t Mini_Pitch_targe = 0;              // 当前目标位置
+int32_t Mini_Pitch_calc_targe = 0;         // 计算目标位置（用于平滑过渡）
+uint8_t Mini_Pitch_preset_flag = 0;        // 预置触发标志
+float Mini_Pitch_pwm_to_mang_ratio = 1.0f; // PWM到角度的映射比例（可调）
+float Mini_Pitch_manual_speed = 5.0f;     // 手动控制速度（用于调参模式）
 float Mini_Pitch_Islow_incbuf = 0;         // 骞虫粦杩囨浮缂撳啿鍙橀噺
-uint8_t Mini_Pitch_first_enter_diaoshe = 0; // 棣栨杩涘叆鍚婂皠妯″紡鏍囧織
+uint8_t Mini_Pitch_first_enter_diaoshe = 0; // 首次进入吊射模式标志
 uint16_t Mini_Pitch_duzhuan_cnt = 0;
 uint8_t Mini_Pitch_E_key_flag = 0;
-// uint8_t Mini_Pitch_tune_enable = 0;         // 璋冨弬浣胯兘锛?=鐢垫満涓嶈緭鍑虹數娴侊紝闇€涓婁綅鏈哄懡浠ゅ紑鍚?
+// uint8_t Mini_Pitch_tune_enable = 0;         // 调参使能：0=电机不输出电流，需上位机命令开启
 
-// huart1璋冨弬鍛戒护鎺ユ敹锛圖MA + IDLE + 涔掍箵缂撳啿锛屼豢VD_2rx锛?
+// huart1调参命令接收（DMA + IDLE + 乒乓缓冲，仿VD_2rx）
 #define TUNE_RX_NUM 64
 uint8_t tune_rx_buf[2][TUNE_RX_NUM] = {0};
 uint8_t tune_FIFO = 0;
@@ -248,18 +244,18 @@ uint16_t tune_rx_byte = 0;
 #define REAL_YAW_REF yaw_cont.continuous_yaw
 // #define REAL_YAW_REF Pitch_088.realAngle.yaw
 const int YT_Erro = 44480;
-#define Yaw_Mouse_Speed 700.0f // Yaw榧犳爣閫熷害
+#define Yaw_Mouse_Speed 700.0f // Yaw鼠标速度
 #define Yaw_YK_GYRO_Speed 6000.0f
 #define Yaw_YK_MANG_Speed 28000.0f
 #define YAW_LEVEL_MANG 28660
 #define YAW_LEVEL_MANG_2 28600 + 32768
-// 鎷ㄧ洏灏勫嚮鍓嶉
+// 拨盘射击前馈
 #define YAW_SHOOT_FF -400.0f
 
-float YAW_PID_OUT = 0;                   // PID杈撳嚭锛岀敤浜庡彂閫丆AN鏁版嵁
+float YAW_PID_OUT = 0;                   // PID输出，用于发送CAN数据
 float Yaw_goal = 0;
-uint8_t yaw_control_mode = PROTECT_MODE; // 鎺у埗妯″紡锛屽崟浣嶅害
-float Erro_Yaw = 0;                      // 璇樊锛屾帶鍒舵ā锟?6锛岀敤浜庤搴﹁锟?
+uint8_t yaw_control_mode = PROTECT_MODE; // 控制模式，单位度
+float Erro_Yaw = 0;                      // 误差，控制模�?6，用于角度误�?
 float Buf_Yaw = 0;
 float vision_yaw = -2.9;
 float yaw_angle_mang;
@@ -267,7 +263,7 @@ int32_t diff_2, diff_1;
 float Yaw_ab;
 float diaoshe_yaw_offset = 0;
 float diff_diaoshe;
-float YAW_0 = 0.0f;//璁板綍yaw0锟?
+float YAW_0 = 0.0f;//记录yaw0�?
 uint8_t diaoshe_running_flag = 0;
 float diaoshe_target_yaw;
 float target_absolute_yaw;
@@ -284,18 +280,18 @@ float Yaw_X;
 #define Pitch_YK_Speed 2500.0f
 #define Pitch_YK_MANG_Speed 8000.0f
 #define PITCH_LEVEL_MANG 50630
-#define MINI_PITCH_BASE_POSITION 32468  // Mini_Pitch鍩哄噯浣嶇疆锛氬搴旇埖鏈虹殑1800
-#define DIAO_SHE_ENCODER_OFFSET  36700   // 鍚婂皠妯″紡鐩爣缂栫爜鍣ㄥ€硷紙鐩稿鍫佃浆闆剁偣锛屽彲璋冿級
+#define MINI_PITCH_BASE_POSITION 32468  // Mini_Pitch基准位置：对应舵机的1800
+#define DIAO_SHE_ENCODER_OFFSET  36700   // 吊射模式目标编码器值（相对堵转零点，可调）
 #define DUZHUAN_DIANLIU      (-3000)
 #define DUZHUAN_SUDU_YUZHI   30
 #define DUZHUAN_QUEREN_CISHU 400
-#define MINI_PITCH_TUNE_MIN 0      // 璋冨弬琛岀▼涓嬮檺锛堝牭杞浂鐐癸級
-#define MINI_PITCH_TUNE_MAX 40000  // 璋冨弬琛岀▼涓婇檺锛堝悐灏勭洰鏍?6700锛岀暀瑁曢噺锛?
+#define MINI_PITCH_TUNE_MIN 0      // 调参行程下限(堵转零点)
+#define MINI_PITCH_TUNE_MAX 40000  // 调参行程上限(吊射目标 36700, 留裕量)
 
-float PITCH_PID_OUT = 0;                   // PID杈撳嚭锛岀敤浜庡彂閫丆AN鏁版嵁
-float Pitch_goal = 0;                      // 鐩爣瑙掑害锛屽崟浣嶅害
-uint8_t pitch_control_mode = PROTECT_MODE; // 鎺у埗妯″紡锛屽崟浣嶅害
-float pitch_mang_goal = 50000;             // 淇话瑙掑害妯″紡鐩爣
+float PITCH_PID_OUT = 0;                   // PID 输出, 用于发送 CAN 数据
+float Pitch_goal = 0;                      // 目标角度, 单位度
+uint8_t pitch_control_mode = PROTECT_MODE; // 控制模式
+float pitch_mang_goal = 50000;             // 编码(角度/码盘)模式目标
 float kk_pitch_mang_lp = 1;
 float PitchGyro_AngleError = 0.0f;
 float pitch_angle;
@@ -305,34 +301,34 @@ float vision_pitch = 33.7;
 float vision_distance = 0;
 uint8_t Pitch_arr_flag = 0;
 float Pitch_X;
-// 鍧愭爣鍙樻崲
+// 坐标变换
 float theta_angle = 0, theta_rad = 0;
 float sin_theta = 0, cos_theta = 0;
 
-// 灞曞紑妯″紡鏍囧織锟?
-uint8_t deploy_flag = 0; // 0=鍏抽棴 1=灞曞紑妯″紡 2=灞曞紑鏃嬭浆
+// 展开模式标志�?
+uint8_t deploy_flag = 0; // 0=关闭 1=展开模式 2=展开旋转
 int32_t mini_pitch_deploy_offset = 0;
 
-// 灏忛檧铻烘爣锟?
+// 小陀螺标�?
 uint8_t SP_Turn_Flag = 0;
 
-// 鎽╂摝杞埌鍦伴潰璺濈璁＄畻
+// 摩擦轮到地面距离计算
 float Pitch_MCL_length = 133.0f;
 float Pitch_Ground_length = 397.0f;
 float current_mcl_height = 0;
 
-// 鑷瀯
+// 自瞄
 uint8_t Anti_Time_Flag = 2;
 int16_t Anti_Time_1 = 0, Anti_Time_2 = 0;
 int16_t ZM_Fire_delay = 834;
 float Yaw_ZM,Pitch_ZM;
 float receive_freq = 0;  // 鎺ユ敹棰戠巼
-uint8_t mouse_press_type = 0;          // 0=锟? 1=鍗曞嚮闀挎寜 2=鍙屽嚮
+uint8_t mouse_press_type = 0;          // 0=�? 1=单击长按 2=双击
 uint16_t mouse_press_counter = 0;
 uint8_t aim_mode = 0x00;
 uint8_t is_mouse_single_clicked = 0;
 
-// 閲嶅姏琛ュ伩鐩稿叧
+// 重力补偿相关
 #define PITCH_GRAVITY_COMP_K 70.0f // 70
 #define PITCH_GRAVITY_ANGLE_OFFSET 10.0f
 #define PITCH_ENCODER_MID 32768 // 缂栫爜鍣ㄤ腑锟?
@@ -340,13 +336,13 @@ float gravity_comp;
 float gravity_compensation = 0.0f;
 float gravity_comp_filtered;
 
-// 鏈涜繙锟?
+// 望远�?
 uint8_t telescope_ON = 0;
-// 鑸垫満纭鍔ㄤ綔鐩稿叧鍙橀噺
+// 舵机确认动作相关变量
 uint8_t servo_confirm_flag = 0;
 uint16_t servo_confirm_timer = 0;
 uint16_t servo_original_ccr = 0;
-//鏈哄櫒浜轰綅缃俊锟?
+// 拨盘相关
 union
 {
   float f_pos;
@@ -354,12 +350,12 @@ union
   uint8_t c[4];
 } Robot_pos_u;
 #define GYRO_COMBO_DEADZONE 1.5f   // 锟?铻轰华姝诲尯
-#define GYRO_COMBO_LPF_ALPHA 0.4f  // 浣庯拷?锟芥护锟?
+#define GYRO_COMBO_LPF_ALPHA 0.4f  // 低�?�滤�?
 
 float gyro_combo_lpf_last = 0.0f;
 float gyro_filtered;
 
-// 鑷瀯鐩稿叧瀹氫箟
+// 自瞄相关定义
 uint16_t press_cnt = 0;
 uint8_t PRESS_TYPE = 0;
 #define NO_ZM_MODE 0
@@ -367,34 +363,34 @@ uint8_t PRESS_TYPE = 0;
 #define ZM_FIRE_MODE 2
 
 // 通用缓变函数 I16_slow / I_slow / I_slow_ease 已下沉到公版库 RM_Lib(RM_Lib.cpp/.h),声明见 RM_Lib.h;调用点不变。
-// 妯″紡搴旂敤锟?
+// 模式应用�?
 void MYMODE_while_application_layer(void)
 {
-  if (YK.yaogan.s1 == YK_SW_UP && YK.yaogan.s2 == YK_SW_MID) // 鍗曚簯鍙帮紝搴曠洏璺熼殢(涓嶅姩)
+  if (YK.yaogan.s1 == YK_SW_UP && YK.yaogan.s2 == YK_SW_MID) // 单云台，底盘跟随(不动)
   {
     MYmode = DAN_YUN_TAI_MODE;
   }
-  else if (YK.yaogan.s1 == YK_SW_UP && YK.yaogan.s2 == YK_SW_DOWN) // 涓婁笅妯″紡
+  else if (YK.yaogan.s1 == YK_SW_UP && YK.yaogan.s2 == YK_SW_DOWN) // 上下模式
   {
     MYmode = SHANG_XIA_MODE;
   }
-  else if (YK.yaogan.s1 == YK_SW_MID && YK.yaogan.s2 == YK_SW_UP) // 搴曠洏浣庯拷?锟藉簳鐩樿窡锟?
+  else if (YK.yaogan.s1 == YK_SW_MID && YK.yaogan.s2 == YK_SW_UP) // 底盘低�?�底盘跟�?
   {
     MYmode = DI_PAN_L_MODE;
   }
-  else if (YK.yaogan.s1 == YK_SW_MID && YK.yaogan.s2 == YK_SW_MID) // 鍙岄噸锛屽簳鐩樿窡闅忥紝锟?铻轰华妯″紡
+  else if (YK.yaogan.s1 == YK_SW_MID && YK.yaogan.s2 == YK_SW_MID) // 双重，底盘跟随，�?螺仪模式
   {
     MYmode = SHUANG_ZHONG_MODE;
   }
-  else if (YK.yaogan.s1 == YK_SW_MID && YK.yaogan.s2 == YK_SW_DOWN) // 鍚婂皠浣庯拷?锟藉簳鐩樿窡闅忥紝pitch
+  else if (YK.yaogan.s1 == YK_SW_MID && YK.yaogan.s2 == YK_SW_DOWN) // 吊射低�?�底盘跟随，pitch
   {
     MYmode = DIAO_SHE_MODE;
   }
-  else if (YK.yaogan.s1 == YK_SW_DOWN && YK.yaogan.s2 == YK_SW_UP) // 搴曠洏楂橈拷?锟藉簳鐩樿窡锟?
+  else if (YK.yaogan.s1 == YK_SW_DOWN && YK.yaogan.s2 == YK_SW_UP) // 底盘高�?�底盘跟�?
   {
     MYmode = DI_PAN_H_MODE;
   }
-  else if (YK.yaogan.s1 == YK_SW_DOWN && YK.yaogan.s2 == YK_SW_MID) // 灏忛檧锟?
+  else if (YK.yaogan.s1 == YK_SW_DOWN && YK.yaogan.s2 == YK_SW_MID) // 小陀�?
   {
     MYmode = XIAO_TUO_LUO_MODE;
   }
@@ -411,7 +407,7 @@ void MYMODE_while_application_layer(void)
     MYmode = PROTECT_MODE;
   }
 }
-// 鎽╂摝杞拷?锟借緫锛岃繑鍥炴懇鎿﹁疆锟?鍏崇姸锟?
+// 摩擦轮�?�辑，返回摩擦轮�?关状�?
 uint8_t MCL_Logic()
 {
   static int16_t MCL_slow_speed = 0;
@@ -419,7 +415,7 @@ uint8_t MCL_Logic()
   static float MCL_I16slow_incbuf = 0;
   static UpDown_check_class UD_MCL(0), UD_C(0), UD_X(0), UD_TURN(0);
   static uint8_t now_state;
-  //鏍规嵁妯″紡璁剧疆鎽╂摝杞拷?锟藉害
+  //根据模式设置摩擦轮�?�度
   if (MYmode == DIAO_SHE_MODE || deploy_flag)
   {
     MCL_MAX_Speed_Now = MCL_MAX_Speed_Far;  // 5050
@@ -428,7 +424,7 @@ uint8_t MCL_Logic()
   {
     MCL_MAX_Speed_Now = MCL_MAX_Speed_Near;  // 3685
   }
-  //淇濇姢妯″紡鍒囨崲鎽╂摝杞拷?锟藉害
+  //保护模式切换摩擦轮�?�度
   if (MYmode == PROTECT_MODE)
   {
     now_state = (YK.yaogan.ch2 < -500 && YK.yaogan.ch3 > 500);
@@ -448,7 +444,7 @@ uint8_t MCL_Logic()
 	{
     MCL_ON_flag = (YK.yaogan.ch1 > 600);
 	}
-  // 閿洏鎺у埗鎽╂摝杞紑锟?
+  // 键盘控制摩擦轮开�?
   if (MYmode == ZHAN_DOU_MODE || MYmode == SHUANG_ZHONG_MODE || MYmode == DIAO_SHE_MODE || MYmode == DAN_YUN_TAI_MODE || MYmode == SHANG_XIA_MODE)
   {
     if (UD_MCL.updata(YK.Pressed_Check(KEY_PRESSED_B)) == UpDown_check_rising && !YK.Pressed_Check(KEY_PRESSED_CTRL))
@@ -458,12 +454,12 @@ uint8_t MCL_Logic()
     else if (UD_X.updata(YK.Pressed_Check(KEY_PRESSED_X)) == UpDown_check_rising && !YK.Pressed_Check(KEY_PRESSED_CTRL))
       Buf_MCL_Speed -= 50;
   }
-  // 鎽╂摝杞拷?锟藉害闄愬埗鍦ㄥ畨鍏ㄨ寖鍥村唴
+  //保护模式切换摩擦轮�?�度
   if (MYmode == PROTECT_MODE)
   {
     MCL_protect_cansend_200_flag = 1;
     MCL_protect_cansend_1FF_flag = 1;
-    MCL_4_motorflag = 0; // 娓呴櫎鐢垫満鎺ユ敹鏍囧織锟?
+    MCL_4_motorflag = 0; // 清除电机接收标志�?
     MCL_2_motorflag = 0;
     MCL_Start_flag = 0;
     MCL_ON_flag = 0; 
@@ -475,18 +471,18 @@ uint8_t MCL_Logic()
     RR_targe_sp = 0;
     LL_targe_sp = 0;
     UPUP_targe_sp = 0;
-    MCL_slow_speed = 0;  // 淇濇姢妯″紡娓呴浂缂撳彉閫熷害
+    MCL_slow_speed = 0;  // 保护模式清零缓变速度
     MCL_I16slow_incbuf = 0;  // 娓呴浂缂撳彉澧為噺缂撳啿锟?
   }
   else
   {
     MCL_Start_flag = 1;
   }
-  // 璁＄畻鐩爣閫熷害
+  // 计算目标速度
   int16_t MCL_targe_sp = MCL_ON_flag ? (MCL_MAX_Speed_Now + Buf_MCL_Speed) : 0;
   I16_slow(&MCL_slow_speed, MCL_targe_sp, 200, 200, 300, &MCL_I16slow_incbuf);
 
-  // 璁剧疆鍚勭數鏈虹洰鏍囷拷?锟藉害
+  // 设置各电机目标�?�度
   if (MCL_Start_flag)
   {
     L_targe_sp = MCL_slow_speed - 14;
@@ -503,11 +499,11 @@ uint8_t MCL_Logic()
 
   return MCL_ON_flag;
 }
-// 鎷ㄧ洏閫昏緫
+// 拨盘逻辑
 void BP_Logic(uint8_t MCL_ON_flag)
 {
   static int32_t BP_adjest_mang = 0;
-  // 妯″紡鍒囨崲
+  // 模式切换
   if (MCL_ON_flag)
   {
     BP_MODE = MANG_MODE;
@@ -526,7 +522,7 @@ void BP_Logic(uint8_t MCL_ON_flag)
     BP_calc_targe = BoPan.mang_inf;
     BP_ON_flag = 0;
   }
-  // 鍚婂皠妯″紡鎷ㄧ洏褰掗浂
+  // 吊射模式拨盘归零
   if (MYmode == DIAO_SHE_MODE || MYmode == SHANG_XIA_MODE)
   {
     if (YK.yaogan.ch1 < -500 && YK.yaogan.ch0 < -500 && BP_MODE != MANG_MODE)
@@ -546,22 +542,22 @@ void BP_Logic(uint8_t MCL_ON_flag)
       BP_ON_flag = 0;
     }
   }
-  // 榧犳爣灏勫嚮
+  // 鼠标射击
   if (MYmode == ZHAN_DOU_MODE || MYmode == SHUANG_ZHONG_MODE || MYmode == DAN_YUN_TAI_MODE)
   {
     UpDown_check_state UD_BoPan_ON_buf;
     UD_BoPan_ON_buf = UD_BoPan_ON.updata(YK.shubiao.press_l);
-    if (UD_BoPan_ON_buf == UpDown_check_rising && MCL_ON_flag && mouse_press_type != 2) // 榧犳爣宸﹂敭鎸変笅涓旀懇鎿﹁疆锟?锟?
+    if (UD_BoPan_ON_buf == UpDown_check_rising && MCL_ON_flag && mouse_press_type != 2) // 鼠标左键按下且摩擦轮�?�?
     {
       Shoot_flag = 1;
       Shoot_time = 0; // 灏勫嚮璁℃椂鍣ㄦ竻锟?
     }
-    else if (UD_BoPan_ON_buf == UpDown_check_falling) // 鏉惧紑
+    else if (UD_BoPan_ON_buf == UpDown_check_falling) // 松开
     {
       Shoot_time = 0; // 娓呴浂
     }
   }
-  // 閬ユ帶鍣ㄦ嫧鐩樻帶锟?
+  // 遥控器拨盘控�?
   if (BP_MODE == MANG_MODE)
   {
     if (UD_BP_1.updata(BP_ON_flag) == UpDown_check_rising)
@@ -582,16 +578,16 @@ void BP_Logic(uint8_t MCL_ON_flag)
     Shoot_flag = 0;
   }
 }
-// 鎷ㄧ洏鍗″脊锟?娴嬪拰锟?寮瑰锟? 1khz璋冪敤
+// 拨盘卡弹�?测和�?弹处�? 1khz调用
 void BP_KD_TIM(void)
 {
   static uint16_t kadan_tui_mang = 6000;
-  static int16_t Kadan_cnt = 0; // 鍗″脊璁℃暟锟?
+  static int16_t Kadan_cnt = 0; // 卡弹计数�?
   static uint16_t kadan_tim = 0;
 
   if (BP_MODE == MANG_MODE)
   {
-    /*锟?娴嬪崱寮瑰苟锟?锟?*/
+    /*�?测卡弹并�?�?*/
     if (PID_BP_sp.OUT_PID < -14000)
     {
       kadan_tim++;
@@ -612,7 +608,7 @@ void BP_KD_TIM(void)
 }
 
 
-// Mini_Pitch_2006鎺у埗閫昏緫
+// Mini_Pitch_2006控制逻辑
 void Mini_Pitch_2006_Logic()
 {
   static UpDown_check_class UD_E(0);
@@ -644,7 +640,7 @@ void Mini_Pitch_2006_Logic()
     // Mini_Pitch_targe = DIAO_SHE_ENCODER_OFFSET;
     if (Mini_Pitch_first_enter_diaoshe == 0)
       Mini_Pitch_first_enter_diaoshe = 1;
-    // 缂撳嚭锛氳繙绂荤洰鏍囧揩閫熷寑閫熼€艰繎锛屾帴杩?DIAO_SHE_ENCODER_OFFSET 鏃跺钩婊戝噺閫熷埌浣?
+    // 缓出：远离目标快速匀速逼近，接近 DIAO_SHE_ENCODER_OFFSET 时平滑减速到位
     I_slow_ease(&Mini_Pitch_targe, Mini_Pitch_calc_targe, 900, 20, 0.15f, 5, &Mini_Pitch_Islow_incbuf);
   }
   else if (MYmode == SHUANG_ZHONG_MODE || MYmode == ZHAN_DOU_MODE || MYmode == XIAO_TUO_LUO_MODE || MYmode == DAN_YUN_TAI_MODE )
@@ -658,7 +654,7 @@ void Mini_Pitch_2006_Logic()
   }
   else
   {
-    // 棰勭疆瑙﹀彂锛氫繚鎶ゆā寮?+ 鍙虫憞鏉嗗彸涓?
+    // 预置触发：保护模式 + 右摇杆右下
     if (YK.yaogan.ch0 > 500 && YK.yaogan.ch1 < -500 && Mini_Pitch_MODE != MANG_MODE)
     {
       Mini_Pitch_2006.first = 0;
@@ -674,16 +670,16 @@ void Mini_Pitch_2006_Logic()
   }
 }
 
-// 鏉块棿閫氫俊澶勭悊 1khz璋冪敤
+// 板间通信处理 1khz调用
 void Communication_boards(void)
 {
-  /*CAN2鍙屾澘閫氫俊锛屽簳鐩樻澘閫氳繃can鎺ユ敹閬ユ帶鍣ㄦ暟锟?,CAN1CAN2鍙戯拷?锟芥懇鎿﹁疆*/
-  if (can2_bjtx010) // 鍙戯拷?锟介仴鎺у櫒鎽囨潌鏁版嵁x
+  /*CAN2双板通信，底盘板通过can接收遥控器数�?,CAN1CAN2发�?�摩擦轮*/
+  if (can2_bjtx010) // 发�?�遥控器摇杆数据x
   {
     CAN_2.Send_RM(0x010, YK.yaogan.ch0, YK.yaogan.ch1, YK.yaogan.ch2, YK.yaogan.ch3);
     can2_bjtx010 = 0;
   }
-  else if (can2_bjtx011) // 鍙戯拷?锟介紶鏍噛z鍜岄敭鐩樻暟锟?
+  else if (can2_bjtx011) // 发�?�鼠标yz和键盘数�?
   {
     CAN_2.Send_RM(0x011, YK.shubiao.x, YK.shubiao.y, YK.jianpan, (uint16_t)(((YK.yaogan.s1 << 4) | (YK.yaogan.s2 << 2) | (YK.shubiao.press_l << 1) | (YK.shubiao.press_r)) & 0x003f));
     can2_bjtx011 = 0;
@@ -702,36 +698,36 @@ void Communication_boards(void)
     int16_t yaw_data = (int16_t)(vision_yaw * 100.0f);
     int16_t distance_data = (int16_t)(vision_distance * 100.0f);
     CAN_2.Send_RM(0x014, pitch_data, yaw_data, distance_data, 0);
-    can2bjtx014 = 0; // 鍙戯拷?锟藉畬鎴愭爣蹇椾綅
+    can2bjtx014 = 0; // 发�?�完成标志位
   }
   else if (BP_protect_cansend_flag)
   {
-    CAN_2.Send_RM(0x200, 0, 0, 0, 0); // 淇濇姢pitch鐢垫満
+    CAN_2.Send_RM(0x200, 0, 0, 0, 0); // 保护pitch电机
     BP_protect_cansend_flag = 0;
   }
-  /* CAN1鎽╂摝杞彂锟?*/
+  /* CAN1摩擦轮发�?*/
   if (MCL_protect_cansend_200_flag)
   {
-    CAN_1.Send_RM(0x200, 0, 0, 0, 0); // 淇濇姢6涓懇鎿﹁疆
+    CAN_1.Send_RM(0x200, 0, 0, 0, 0); // 保护6个摩擦轮
     MCL_protect_cansend_200_flag = 0;
   }
   else if (MCL_protect_cansend_1FF_flag)
   {
-    CAN_1.Send_RM(0x1FF, 0, 0, 0, 0); // 淇濇姢6涓懇鎿﹁疆
+    CAN_1.Send_RM(0x1FF, 0, 0, 0, 0); // 保护6个摩擦轮
     MCL_protect_cansend_1FF_flag = 0;
   }
 }
-// 瀹氭椂锟?12鍥炶皟
+// 定时�?12回调
 void TIM12_Callback(void)
 {
  Pitch_088.analyse();
- timeout_imu = 0;  // BMI088鏁版嵁鏇存柊锛屾竻闆惰秴鏃惰鏁?
+ timeout_imu = 0;  // BMI088数据更新，清零超时计数
  if (abs(Pitch_088.realAngle.pitch) < 2.0f)
   {
    Pitch_088.realAngle.pitch = 0;
   }
 }
-// Mini PITCH鑸垫満鑾峰彇PWM锟?
+// Mini PITCH舵机获取PWM�?
 uint16_t Mini_PITCH_Get_PWM()
 {
   static uint8_t mini_pitch_ctrl_flag = 0;
@@ -740,7 +736,7 @@ uint16_t Mini_PITCH_Get_PWM()
   static uint16_t mini_pitch_ccr = 2700;
   static const uint16_t mini_pitch_downmang = 1800;
 
-  // 鎺у埗妯″紡澶勭悊
+  // 控制模式处理
   if (MYmode == DIAO_SHE_MODE || MYmode == SHANG_XIA_MODE || deploy_flag)
   {
     mini_pitch_ctrl_flag = 1;
@@ -753,7 +749,7 @@ uint16_t Mini_PITCH_Get_PWM()
   {
     mini_pitch_ctrl_flag = 0;
   }
-  // PWM鍊艰锟?
+  //保护模式切换摩擦轮�?�度
   if (MYmode == PROTECT_MODE)
   {
     mini_pitch_ccr = 2700;
@@ -782,14 +778,14 @@ uint16_t Mini_PITCH_Get_PWM()
 
   return LIMIT(mini_pitch_ccr, 1800, 4200);
 }
-// 鏈涜繙闀滆埖鏈鸿幏鍙朠WM锟?
+// 望远镜舵机获取PWM�?
 uint16_t Telescope_Get_PWM()
 {
   static uint16_t telescope_ccr = 0;
   static const uint16_t bj_en_ccr = 4900;
   static UpDown_check_class UD_E(0);
 
-  // 鏍囧織澶勭悊
+  //保护模式切换摩擦轮�?�度
   if (MYmode == PROTECT_MODE)
   {
     telescope_ccr = 2500;
@@ -806,7 +802,7 @@ uint16_t Telescope_Get_PWM()
     // telescope_ccr = 2000;   
   }
 
-  // // E閿帶鍒舵湜杩滈暅
+  // // E键控制望远镜
   // if (UD_E.updata(YK.Pressed_Check(KEY_PRESSED_E)) == UpDown_check_rising)
   // {
   //   telescope_ON = !telescope_ON;
@@ -852,36 +848,39 @@ void YAW_PID_Calc(void)
   if (yaw_control_mode == GYRO_MODE)
   {
     Yaw_goal -= ((float)YK.yaogan.ch2 / Yaw_YK_GYRO_Speed + (float)LIMIT(YK.shubiao.x, -1000, 1000) / Yaw_Mouse_Speed);
-    // GYRO 双环 PID 交给 Gimbal_Zhou(配置见全局 Yaw_calc 定义)。目标处理留应用层。
-    Yaw_calc.goal = Yaw_goal;
-    Yaw_calc.gyro_update(request.zimiao_status);
-    YAW_PID_OUT = Yaw_calc.output;
+    YAW_PID_OUT = Yaw_calc.Gyro_calc(Yaw_goal, request.zimiao_status);  // GYRO 双环,一行调用
   }
   else if (yaw_control_mode == MANG_MODE)
   {
-    if (UD_TURN_Y.updata(YK.yaogan.ch0 > 500 && YK.yaogan.ch1 < -500) == UpDown_check_rising)
-    {
-        // 璁＄畻褰撳墠杩炵画yaw瑙掑害锟?-180~+180鑼冨洿
-        float current_angle = fmodf(yaw_cont.continuous_yaw, 360.0f);
-        if (current_angle > 180.0f) current_angle -= 360.0f;
-        if (current_angle < -180.0f) current_angle += 360.0f;
+				Yaw_goal -= ((float)YK.yaogan.ch2 / Yaw_YK_MANG_Speed) + ((YK.Pressed_Check(KEY_PRESSED_D) - YK.Pressed_Check(KEY_PRESSED_A)) * 0.002f);
+        YAW_PID_OUT = Yaw_calc.Mang_calc(Yaw_goal);
 
-        // 鐩爣瑙掑害
-        float target_angle = YAW_0 - vision_yaw;
-        if (target_angle > 180.0f) target_angle -= 360.0f;
-        if (target_angle < -180.0f) target_angle += 360.0f;
 
-        // 璁＄畻锟?鐭棆杞亸绉婚噺
-        float offset = target_angle - current_angle;
-        if (offset > 180.0f) offset -= 360.0f;
-        if (offset < -180.0f) offset += 360.0f;
+//     if (UD_TURN_Y.updata(YK.yaogan.ch0 > 500 && YK.yaogan.ch1 < -500) == UpDown_check_rising)
+//     {
+//         // 璁＄畻褰撳墠杩炵画yaw瑙掑害锟?-180~+180鑼冨洿
+//         float current_angle = fmodf(yaw_cont.continuous_yaw, 360.0f);
+//         if (current_angle > 180.0f) current_angle -= 360.0f;
+//         if (current_angle < -180.0f) current_angle += 360.0f;
 
-        // 鍗曞嚮鍋忕Щ閲忓簲鐢ㄥ埌杩炵画yaw瑙掑害
-        Yaw_goal = yaw_cont.continuous_yaw + offset;
+//         // 鐩爣瑙掑害
+//         float target_angle = YAW_0 - vision_yaw;
+//         if (target_angle > 180.0f) target_angle -= 360.0f;
+//         if (target_angle < -180.0f) target_angle += 360.0f;
+
+//         // 璁＄畻锟?鐭棆杞亸绉婚噺
+//         float offset = target_angle - current_angle;
+//         if (offset > 180.0f) offset -= 360.0f;
+//         if (offset < -180.0f) offset += 360.0f;
+
+//         // 鍗曞嚮鍋忕Щ閲忓簲鐢ㄥ埌杩炵画yaw瑙掑害
+//         Yaw_goal = yaw_cont.continuous_yaw + offset;
         
-//        PID_YAW_TURN_MANG.PID_update_LP(Yaw_goal, yaw_cont.continuous_yaw, 0.2);
-//        PID_YAW_TURN_GYRO.PID_update(PID_YAW_TURN_MANG.OUT_PID, hipnuc_raw.hi91.gyr[2]);
-    }
+// //        PID_YAW_TURN_MANG.PID_update_LP(Yaw_goal, yaw_cont.continuous_yaw, 0.2);
+// //        PID_YAW_TURN_GYRO.PID_update(PID_YAW_TURN_MANG.OUT_PID, hipnuc_raw.hi91.gyr[2]);
+//     }
+
+
     // if(diaoshe_running_flag)
     // {
 			  // PID_YAW_TURN_MANG.PID_update_LP(Yaw_goal, yaw_cont.continuous_yaw, 1);
@@ -892,32 +891,30 @@ void YAW_PID_Calc(void)
         //   diaoshe_running_flag = 0;  
         // }
     // }
-    else
-    {
-				Yaw_goal -= ((float)YK.yaogan.ch2 / Yaw_YK_MANG_Speed) + ((YK.Pressed_Check(KEY_PRESSED_D) - YK.Pressed_Check(KEY_PRESSED_A)) * 0.002f);
-			  PID_YAW_Erro_IMU_MANG.PID_update_LP(Yaw_goal, yaw_cont.continuous_yaw, 1);
+    // else
+    // {
+				// Yaw_goal -= ((float)YK.yaogan.ch2 / Yaw_YK_MANG_Speed) + ((YK.Pressed_Check(KEY_PRESSED_D) - YK.Pressed_Check(KEY_PRESSED_A)) * 0.002f);
 				// PID_YAW_Erro_IMU_GYRO.PID_update(PID_YAW_Erro_IMU_MANG.OUT_PID,  hipnuc_raw.hi91.gyr[2]);
-        PID_YAW_Erro_IMU_GYRO.PID_update(PID_YAW_Erro_IMU_MANG.OUT_PID, hipnuc_raw.hi91.gyr[2]);
-    }
-    diaoshe_target_yaw = YAW_0 - hipnuc_raw.hi91.yaw; 
-    YAW_PID_OUT = -PID_YAW_Erro_IMU_GYRO.OUT_PID;
+    // }
+    // diaoshe_target_yaw = YAW_0 - hipnuc_raw.hi91.yaw; 
+        // YAW_PID_OUT = Yaw_calc.Mang_calc(Yaw_goal);  // MANG 单组,一行调用
   }  
   else//28215锟?61050 
   {
-    if(yaw_0_flag && (Motor_LK6010_Yaw.mang_inf % 28215 == 0 || Motor_LK6010_Yaw.mang_inf % 61050 == 0))
-    {
-      YAW_0 = hipnuc_raw.hi91.yaw;
-      yaw_0_flag = 0;
-      // 瑙﹀彂鑸垫満纭鍔ㄤ綔
-      servo_confirm_flag = 1;
-      servo_confirm_timer = 0;
-      servo_original_ccr = Telescope_Get_PWM(); // 淇濆瓨褰撳墠鑸垫満锟?
-    }
+    // if(yaw_0_flag && (Motor_LK6010_Yaw.mang_inf % 28215 == 0 || Motor_LK6010_Yaw.mang_inf % 61050 == 0))
+    // {
+    //   YAW_0 = hipnuc_raw.hi91.yaw;
+    //   yaw_0_flag = 0;
+    //   // 瑙﹀彂鑸垫満纭鍔ㄤ綔
+    //   servo_confirm_flag = 1;
+    //   servo_confirm_timer = 0;
+    //   servo_original_ccr = Telescope_Get_PWM(); // 淇濆瓨褰撳墠鑸垫満锟?
+    // }
     Yaw_goal = yaw_cont.continuous_yaw;
     YAW_PID_OUT = 0;
   }
 }
-// YAW瑙掑害鏇存柊锛屾帴鏀禖AN鏁版嵁鍚庤皟锟?
+// YAW角度更新，接收CAN数据后调�?
 void YAW_Angle_Update(void)
 {
   static int yaw_relative_mang = 0;
@@ -955,10 +952,10 @@ void PITCH_Logic(void)
     Pitch_goal = hipnuc_raw.hi91.pitch;
   }
 }
-// 閲嶅姏琛ュ伩璁＄畻锛屾牴鎹畃itch瑙掑害璁＄畻
+// 重力补偿计算，根据pitch角度计算
 float PITCH_Gravity_Compensation(float pitch_angle)
 {
-  float pitch_rad = (pitch_angle + PITCH_GRAVITY_ANGLE_OFFSET) * 0.0174533f; // 瑙掑害杞姬锟?
+  float pitch_rad = (pitch_angle + PITCH_GRAVITY_ANGLE_OFFSET) * 0.0174533f; // 角度转弧�?
   gravity_comp = -PITCH_GRAVITY_COMP_K * cosf(pitch_rad);
   gravity_comp_filtered += 1.0f * (gravity_comp - gravity_comp_filtered);
 
@@ -970,23 +967,14 @@ void PITCH_PID_Calc(void)
   {
     Pitch_goal -= (float)YK.yaogan.ch3 / Pitch_YK_Speed + ((float)LIMIT(YK.shubiao.y, -500, 500) / Pitch_Mouse_Speed);
     Pitch_goal = LIMIT(Pitch_goal, -44, 16);
-    gravity_compensation = PITCH_Gravity_Compensation(hipnuc_raw.hi91.pitch);
-    // GYRO 双环 PID 交给 Gimbal_Zhou(配置见全局 Pitch_calc 定义)。目标处理与重力补偿计算留应用层。
-    Pitch_calc.lp_wai = kk_pitch_mang_lp;   // 外环 LP 系数(调参用,现值1)
-    Pitch_calc.goal   = Pitch_goal;
-    Pitch_calc.gyro_update(request.zimiao_status);
-    PITCH_PID_OUT = Pitch_calc.output;
+    PITCH_PID_OUT = Pitch_calc.Gyro_calc(Pitch_goal, request.zimiao_status);  // GYRO 双环,一行调用
   }
   else if (pitch_control_mode == MANG_MODE)
   {
     float ws_pitch = YK.Pressed_Check(KEY_PRESSED_CTRL) ? 0.0f : (YK.Pressed_Check(KEY_PRESSED_W) - YK.Pressed_Check(KEY_PRESSED_S)) * 0.002f;
     Pitch_goal -= ((float)(YK.yaogan.ch3 / Pitch_YK_MANG_Speed) + ws_pitch);
     Pitch_goal = LIMIT(Pitch_goal, -43, 16);
-    gravity_compensation = PITCH_Gravity_Compensation(hipnuc_raw.hi91.pitch);
-    PID_LK_Erro_Pitch_IMU_MANG.PID_update_LP(Pitch_goal, hipnuc_raw.hi91.pitch, 1);
-    PID_LK_Erro_Pitch_IMU_Gyro.PID_update(PID_LK_Erro_Pitch_IMU_MANG.OUT_PID, hipnuc_raw.hi91.gyr[0]);
-    // PITCH_PID_OUT = PID_LK_Erro_Pitch_IMU_Gyro.OUT_PID + gravity_compensation;
-    PITCH_PID_OUT = -PID_LK_Erro_Pitch_IMU_Gyro.OUT_PID;
+    PITCH_PID_OUT = Pitch_calc.Mang_calc(Pitch_goal);  // MANG 单组,一行调用
   }
   else
   {
@@ -994,9 +982,9 @@ void PITCH_PID_Calc(void)
     PITCH_PID_OUT = 0;
   }
 }
-// PITCH瑙掑害鏇存柊锛屾帴鏀禖AN鏁版嵁鍚庤皟锟?
+// PITCH角度更新，接收CAN数据后调�?
 void PITCH_Angle_Update(void) { Motor_LK6010_Pitch.update_65535mang_inf_basic_zeromang(); }
-// 鎺夊ご澶勭悊鍑芥暟
+// 掉头处理函数
 void YAW_Turn_Handle(void)
 {
   static UpDown_check_class UD_DiaoTou_No(0);
@@ -1005,23 +993,23 @@ void YAW_Turn_Handle(void)
     Yaw_goal -= 180.0f;
   }
 }
-// 鑸垫満PWM杈撳嚭
+// 舵机PWM输出
 void Servo_PWM_Output()
 {
   uint16_t telescope_ccr = Telescope_Get_PWM();
-  // uint16_t mini_pitch_ccr = Mini_PITCH_Get_PWM();  // 宸茬鐢細鐜板湪浣跨敤2006鐢垫満
+  // uint16_t mini_pitch_ccr = Mini_PITCH_Get_PWM();  // 已禁用：现在使用2006电机
 
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, telescope_ccr);
-  // __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, mini_pitch_ccr);  // 宸茬鐢?
+  // *in = target;
 }
-// 閿洏鐗规畩鍔熻兘澶勭悊
+// 键盘特殊功能处理
 void Keyboard_Special_Func()
 {
   static UpDown_check_class UD_XTL(0), UD_R(0), UD_Deploy_Turn(0), UD_Arr_PY(0), UD_Boost(0), UD_MCL_Speed_Turn(0),UD_Z(0),UD_X(0),UD_C(0);
   static int targe_f = YT_Erro;
   static uint8_t mini_pitch_anjian_flag = 0;
 
-  /*閿洏鎺у埗浣胯兘鏍囧織*/ // 鏍规嵁妯″紡鍐冲畾鏄惁鍚敤閿洏鎺у埗鍔熻兘(闃叉璇Е瀵艰嚧鎰忓鎿嶄綔)
+  // 键盘控制摩擦轮开�?
   if (MYmode == ZHAN_DOU_MODE || MYmode == SHUANG_ZHONG_MODE || MYmode == DIAO_SHE_MODE || MYmode == DAN_YUN_TAI_MODE || MYmode == SHANG_XIA_MODE)
   {
     jianshu_ctrl_flag = ENABLE_MODE;
@@ -1033,7 +1021,7 @@ void Keyboard_Special_Func()
   /**鎸夐敭鍔熻兘 */
   if (jianshu_ctrl_flag == ENABLE_MODE)
   {
-    // Q锟? - 灏忛檧锟?
+    // Q�? - 小陀�?
     if (UD_XTL.updata(YK.Pressed_Check(KEY_PRESSED_Q)) == UpDown_check_rising && !YK.Pressed_Check(KEY_PRESSED_CTRL))
     {
       XTL_flag = !XTL_flag;
@@ -1055,7 +1043,7 @@ void Keyboard_Special_Func()
       Pitch_goal = 0;
       telescope_ON = 0;
     }
-    // R锟? - 灞曞紑妯″紡鍒囨崲
+    // R�? - 展开模式切换
     if (UD_R.updata(YK.Pressed_Check(KEY_PRESSED_R)) == UpDown_check_rising && !YK.Pressed_Check(KEY_PRESSED_CTRL))
     {
       deploy_flag = !deploy_flag;
@@ -1063,7 +1051,7 @@ void Keyboard_Special_Func()
       telescope_ON = deploy_flag ? 1 : 0;
       // Pitch_goal = -36.5f;
     }
-    // F锟? - 灞曞紑妯″紡鏃嬭浆180锟?
+    // F�? - 展开模式旋转180�?
     if (UD_Deploy_Turn.updata(YK.Pressed_Check(KEY_PRESSED_F)) == UpDown_check_rising && !YK.Pressed_Check(KEY_PRESSED_CTRL) && deploy_flag)
     {
       if (YT_Erro > 32767)
@@ -1080,7 +1068,7 @@ void Keyboard_Special_Func()
       mini_pitch_anjian_flag = 0;
       telescope_ON = 0;
     }
-    // 锟?娴嬫棆杞埌浣嶏紝鎭㈠灞曞紑鏍囧織
+    // �?测旋转到位，恢复展开标志
     if (deploy_flag == 2 && abs(targe_f - Motor_LK6010_Yaw.mang) < 2500)
     {
       deploy_flag = 0;
@@ -1105,7 +1093,7 @@ void Keyboard_Special_Func()
     mini_pitch_deploy_offset = 0;
   }
 }
-// Mini pitch榧犳爣璋冩暣锟?160Hz璋冪敤
+// Mini pitch鼠标调整�?160Hz调用
 void Mini_PITCH_Mouse_Adjust(void)
 {
   static float mini_pitch_buf_ccr = 0;
@@ -1116,7 +1104,7 @@ void Mini_PITCH_Mouse_Adjust(void)
     mini_pitch_buf_ccr -= YK.shubiao.y / 40.0f;
   }
 }
-// 灞曞紑妯″紡瓒呮椂锟?鏌ワ紝160Hz璋冪敤
+// 展开模式超时�?查，160Hz调用
 void Deploy_Timeout_Check(void)
 {
   static int16_t deploy_out_tim = 0;
@@ -1125,7 +1113,7 @@ void Deploy_Timeout_Check(void)
     deploy_out_tim++;
     if (deploy_out_tim > 160)
     {
-      deploy_flag = 0; // 淇濇姢锛岃秴鏃舵仮澶嶆爣锟?
+      deploy_flag = 0; // 保护，超时恢复标�?
       deploy_out_tim = 0;
     }
   }
@@ -1137,7 +1125,7 @@ void Deploy_Timeout_Check(void)
 // 澶嶄綅鍑芥暟
 void Reset(void)
 {
-  if (YK.Pressed_Check(KEY_PRESSED_Z) && YK.Pressed_Check(KEY_PRESSED_CTRL)) // 鎸変綇z鍜宑trl閿繘琛岃蒋浠跺锟?
+  if (YK.Pressed_Check(KEY_PRESSED_Z) && YK.Pressed_Check(KEY_PRESSED_CTRL)) // 按住z和ctrl键进行软件复�?
   {
     for (uint8_t ii1 = 0; ii1 < 8; ii1++)
     {
@@ -1164,11 +1152,11 @@ void Reset(void)
     }
     CAN_2.Send_RM(0x200, 0, 0, 0, 0);
     HAL_Delay(10);
-    __set_FAULTMASK(1); // 鍏抽棴锟?鏈変腑锟?
+    __set_FAULTMASK(1); // 关闭�?有中�?
     NVIC_SystemReset(); // 澶嶄綅
   }
 }
-//鑷瀯锟?锟?
+//自瞄�?�?
 void ZM_Check(void)
 {
   static UpDown_check_class UD_ZM_Fire(0), UD_FIRE(0);
@@ -1180,7 +1168,7 @@ void ZM_Check(void)
 
   UpDown_check_state mouse_edge = UD_ZM_Fire.updata(YK.shubiao.press_r);
 
-  // 榧犳爣鍙抽敭涓婂崌娌匡紝锟?娴嬪崟鍑绘垨鍙屽嚮
+  // 鼠标右键上升沿，�?测单击或双击
   if (mouse_edge == UpDown_check_rising)
   {
     mouse_press_counter = 0;
@@ -1192,24 +1180,24 @@ void ZM_Check(void)
     else
     {
       mouse_press_type = 1;  // 鍗曞嚮闀挎寜
-      is_mouse_single_clicked = 0;  // 娓呴櫎鍗曞嚮鏍囧織
+      is_mouse_single_clicked = 0;  // 清除单击标志
     } 
   }   
 
-  // 鏉惧紑榧犳爣涓婂崌娌匡紝锟?娴嬬煭锟?
+  // 松开鼠标上升沿，�?测短�?
   else if (mouse_edge == UpDown_check_falling)
   {
     mouse_release_counter = 0;
 
-    // 鍒ゆ柇鏄惁涓虹煭鎸夊崟锟?
+    // 判断是否为短按单�?
     if (mouse_press_counter < MOUSE_SHORT_CLICK_TIME)
     {
-      is_mouse_single_clicked = 1;  // 鏍囪鍗曞嚮鐘讹拷??
+      is_mouse_single_clicked = 1;  // 标记单击状�??
     }
     
     mouse_press_type = 0;
   }
-  //璁℃暟锟?
+  //计数�?
   if (YK.shubiao.press_r)
   {
     mouse_press_counter++;
@@ -1220,7 +1208,7 @@ void ZM_Check(void)
     mouse_release_counter++;
     mouse_press_counter = 0;
 
-    // 瓒呮椂娓呴櫎鍗曞嚮鏍囪
+    // 超时清除单击标记
     if (is_mouse_single_clicked && mouse_release_counter >= MOUSE_CLICK_GAP_TIME)
     {
       is_mouse_single_clicked = 0;
@@ -1231,12 +1219,12 @@ void ZM_Check(void)
   {
     if (YK.shubiao.press_r)
     {
-      if (mouse_press_type == 1 && mouse_press_counter >= MOUSE_LONG_PRESS_TIME) // 闀挎寜鍚敤鑷瀯
+      if (mouse_press_type == 1 && mouse_press_counter >= MOUSE_LONG_PRESS_TIME) // 长按启用自瞄
       {
         request.zimiao_status = 1;
         zm_press1++;
       }
-      else if (mouse_press_type == 2 && mouse_press_counter >= 100)  // 鍙屽嚮灏勫嚮
+      else if (mouse_press_type == 2 && mouse_press_counter >= 100)  // 双击射击
       {
         request.zimiao_status = 1;
         if (SuperPower.mode == 2 && !ZM_Fire_delay && (heat_flag || YK.Pressed_Check(KEY_PRESSED_CTRL)))
@@ -1268,7 +1256,7 @@ void ZM_Check(void)
       request.zimiao_status = 1;
       MCL_ON_flag = 1;
       
-      if (SuperPower.mode == 2 && !ZM_Fire_delay && YK.yaogan.ch0 < -500 && (heat_flag || YK.Pressed_Check(KEY_PRESSED_CTRL))) //鑷瀯鐏帶
+      if (SuperPower.mode == 2 && !ZM_Fire_delay && YK.yaogan.ch0 < -500 && (heat_flag || YK.Pressed_Check(KEY_PRESSED_CTRL))) //自瞄火控
       // if (SuperPower.mode == 2 && !ZM_Fire_delay)
       {
         Shoot_flag = 1;
@@ -1296,56 +1284,56 @@ void ZM_Check(void)
 }
 void Laser_deal(GPIO_PinState Laser_State)
 {
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, Laser_State); // 锟?鍏夊紑鍏虫帶锟?
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, Laser_State); // �?光开关控�?
 }
-// 鑷瀯淇濇姢妯″紡澶勭悊
+// 自瞄保护模式处理
 void ZM_Protect_Mode_Handle(void)
 {
   if (MYmode == PROTECT_MODE)
   {
     request.zimiao_status = 0;
-    // 鑷瀯淇濇姢锛岄仴鎺у櫒鐗瑰畾鎿嶄綔鎺у埗PY锟?锟?
+    // 自瞄保护，遥控器特定操作控制PY�?�?
     if (YK.yaogan.ch0 < -500 && YK.yaogan.ch1 > 500)
     {
       Laser_deal(GPIO_PIN_SET);
     }
     if (YK.yaogan.ch0 < -500 && YK.yaogan.ch1 < -500)
     {
-      Laser_deal(GPIO_PIN_RESET); // 鍏抽棴锟?锟?
+      Laser_deal(GPIO_PIN_RESET); // 关闭�?�?
     }
   }
 }
-// 鑷瀯鎺у埗
+// 自瞄控制
 void ZM_Control(void)
 {
   ZM_Check();
-  ZM_Protect_Mode_Handle(); // 鑷瀯淇濇姢妯″紡
+  ZM_Protect_Mode_Handle(); // 自瞄保护模式
 }
 #define PI 3.1415926
-// 涓插彛3涓柇鑷瀯(瑙嗚)
+// 串口3中断自瞄(视觉)
 void UART3_IT_ZM(void)
 {
   static int aa;
   uint32_t temp;
 //  extern BMI088 Pitch_088;
   extern float Pitch_goal, Yaw_goal;
-  if ((__HAL_UART_GET_FLAG(&MINI_PC_USART_HANDLE, UART_FLAG_IDLE) != RESET)) // 锟?娴嬪埌绌洪棽涓柇锛孶ART鎺ユ敹瀹屾垚锛屼覆鍙ｇ┖闂蹭腑鏂紝锟?娴嬪埌锟?甯ф暟鎹帴鏀跺畬锟?
+  if ((__HAL_UART_GET_FLAG(&MINI_PC_USART_HANDLE, UART_FLAG_IDLE) != RESET)) // �?测到空闲中断，UART接收完成，串口空闲中断，�?测到�?帧数据接收完�?
   {
 
-    __HAL_UART_CLEAR_IDLEFLAG(&MINI_PC_USART_HANDLE); // 娓呴櫎绌洪棽涓柇鏍囧織锟?
+    __HAL_UART_CLEAR_IDLEFLAG(&MINI_PC_USART_HANDLE); // 清除空闲中断标志�?
     temp = MINI_PC_USART_HANDLE.Instance->SR;
     temp = MINI_PC_USART_HANDLE.Instance->DR;
-    HAL_UART_DMAStop(&MINI_PC_USART_HANDLE);                                     // 鍋滄DMA浼犺緭锛岄槻姝㈡暟鎹锟?
+    HAL_UART_DMAStop(&MINI_PC_USART_HANDLE);                                     // 停止DMA传输，防止数据覆�?
     // getReceiveData_ZM(Mini_PC_rx_buf);
-    GetReceive_SP(Mini_PC_rx_buf);                                         // 澶勭悊鎺ユ敹鍒扮殑鏁版嵁锛屼粠Mini_PC_rx_buf涓彁鍙栨湁鏁堜俊锟?
-    HAL_UART_Receive_DMA(&MINI_PC_USART_HANDLE, (uint8_t *)Mini_PC_rx_buf, 128); // 閲嶆柊鍚姩DMA鎺ユ敹锛屽噯澶囨帴鏀朵笅锟?甯ф暟鎹紝锟?锟?128瀛楄妭
+    GetReceive_SP(Mini_PC_rx_buf);                                         // 处理接收到的数据，从Mini_PC_rx_buf中提取有效信�?
+    HAL_UART_Receive_DMA(&MINI_PC_USART_HANDLE, (uint8_t *)Mini_PC_rx_buf, 128); // 重新启动DMA接收，准备接收下�?帧数据，�?�?128字节
     // if (isnan(response.yaw.f))
-    //   response.yaw.f = 0.0; // 濡傛灉瑙嗚鏁版嵁涓篘aN锛屽垯灏嗗叾璁剧疆锟?0锛岄槻姝㈠紓甯革拷?锟藉奖鍝嶆帶锟?
+    //   response.yaw.f = 0.0; // 如果视觉数据为NaN，则将其设置�?0，防止异常�?�影响控�?
     // if (isnan(response.pitch.f))
     //   response.pitch.f = 0.0; // 鍚屼笂
     /*************** Your code *****************/
 
-    if (Mini_PC_rx_buf[0] == 0x66 && Mini_PC_rx_buf[28] == 0x11) // 锟?鏌ユ暟鎹抚澶村熬鏄惁锟?0x66锛岄獙璇佹暟鎹湁鏁堬拷??
+    if (Mini_PC_rx_buf[0] == 0x66 && Mini_PC_rx_buf[28] == 0x11) // �?查数据帧头尾是否�?0x66，验证数据有效�??
     {
       if(counter<= 1000)
       {
@@ -1358,11 +1346,11 @@ void UART3_IT_ZM(void)
         // Pitch_goal = -response.pitch.f;
         // Yaw_goal = (SuperPower.yaw.f*180.0 / PI);
         float zm_yaw_raw = SuperPower.yaw.f * 180.0f / PI;  // -180 ~ +180
-        // 1. 璁＄畻褰撳墠杩炵画yaw瑙掑害锟?-180~+180鑼冨洿
+        // 1. 计算当前连续yaw角度�?-180~+180范围
         float current_mod = fmodf(yaw_cont.continuous_yaw, 360.0f);
         if (current_mod > 180.0f)  current_mod -= 360.0f;
         if (current_mod < -180.0f) current_mod += 360.0f;
-        // 2. 璁＄畻瑙嗚鐩爣涓庡綋鍓嶈锟?-180~+180鑼冨洿鍐呯殑锟?鐭亸锟?
+        // 2. 计算视觉目标与当前角�?-180~+180范围内的�?短偏�?
         float diff = zm_yaw_raw - current_mod;
         if (diff > 180.0f)  diff -= 360.0f;
         if (diff < -180.0f) diff += 360.0f;
@@ -1376,11 +1364,11 @@ void UART3_IT_ZM(void)
   }
 }
 
-// ========== RGB Debug 鍒濆鍖栫浉鍏冲嚱鏁?==========
+// ========== RGB Debug 初始化相关函数 ==========
 
 /**
- * @brief LED 4 鑷瀯鐘舵€佹洿鏂板嚱鏁帮紙鑷畾涔夊洖璋冿級
- * @note 鑷瀯鏈変笁绉嶇姸鎬侊細缁胯壊锛堝叧闂級銆佽摑鑹诧紙鑷瀯鐏帶锛夈€佺孩鑹诧紙鎿嶄綔鎵嬬伀鎺э級
+ * @brief LED 4 自瞄状态更新函数（自定义回调）
+ * @note 自瞄有三种状态：绿色（关闭）、蓝色（自瞄火控）、红色（操作手火控）
  */
 void RGB_LED4_Zimiao_Update(void)
 {
@@ -1390,30 +1378,30 @@ void RGB_LED4_Zimiao_Update(void)
     }
     else if (PRESS_TYPE == ZM_FIRE_MODE)
     {
-        RGB_UI.WS281x_SetPixelRGB(4, 0, 0, RGB_goal);   // 钃濊壊锛氳嚜鐬勭伀鎺фā寮?
+        RGB_UI.WS281x_SetPixelRGB(4, 0, 0, RGB_goal);   // 蓝色：自瞄火控模式
     }
     else if (PRESS_TYPE == OWN_FIRE_MODE)
     {
-        RGB_UI.WS281x_SetPixelRGB(4, RGB_goal, 0, 0);   // 绾㈣壊锛氭搷浣滄墜鐏帶妯″紡
+        RGB_UI.WS281x_SetPixelRGB(4, RGB_goal, 0, 0);   // 红色：操作手火控模式
     }
 }
 
 /**
- * @brief RGB Debug 鍒濆鍖栧嚱鏁?
- * @note 閰嶇疆5涓狶ED鐨勮澶囨槧灏勫拰鍔熻兘鐘舵€佹樉绀?
+ * @brief RGB Debug 初始化函数
+ * @note 配置5个LED的设备映射和功能状态显示
  */
 void RGB_Debug_Setup(void)
 {
     // ========== 閰嶇疆 LED 鏄犲皠琛?==========
 
-    // LED 0: Pitch/Yaw鐢垫満銆佷簯鍙癐MU
+    // LED 0: Pitch/Yaw电机、云台IMU
     led_mappings[0].led_index = 0;
     led_mappings[0].device_count = 3;
-    // Pitch鐢垫満锛圠K6010锛?
+    // Pitch电机（LK6010）
     led_mappings[0].devices[0].timeout_ptr = &timeout_pitch;
     led_mappings[0].devices[0].timeout_threshold = 10;  // 200ms瓒呮椂
     led_mappings[0].devices[0].status_flag_ptr = NULL;
-    // Yaw鐢垫満锛圠K6010锛?
+    // Yaw电机（LK6010）
     led_mappings[0].devices[1].timeout_ptr = &timeout_yaw;
     led_mappings[0].devices[1].timeout_threshold = 10;
     led_mappings[0].devices[1].status_flag_ptr = NULL;
@@ -1426,8 +1414,8 @@ void RGB_Debug_Setup(void)
     led_mappings[0].color_modes[1] = GREEN_MODE;      // Yaw鏁呴殰锛氱豢闂?
     led_mappings[0].color_modes[2] = RED_GREEN_MODE;  // IMU鏁呴殰锛氱孩缁夸氦鏇?
 
-    // LED 1: 鎽╂摝杞紙6涓紝浣哃ED鏄犲皠鏈€澶?涓級+ 鎷ㄧ洏
-    // 浼樺厛鐩戞帶锛氫笂杞€佸乏杞€佸彸杞€佹嫧鐩?
+    // LED 1: 摩擦轮（6个，但LED映射最多4个）+ 拨盘
+    // 优先监控：上轮、左轮、右轮、拨盘
     led_mappings[1].led_index = 1;
     led_mappings[1].device_count = 4;
     led_mappings[1].devices[0].timeout_ptr = &timeout_mcl_up;
@@ -1447,7 +1435,7 @@ void RGB_Debug_Setup(void)
     led_mappings[1].color_modes[2] = BLUE_MODE;
     led_mappings[1].color_modes[3] = RED_GREEN_MODE;
 
-    // LED 2: 搴曠洏3508鐢垫満锛圡1-M4锛?
+    // LED 2: 底盘3508电机（M1-M4）
     led_mappings[2].led_index = 2;
     led_mappings[2].device_count = 4;
     led_mappings[2].devices[0].timeout_ptr = NULL;
@@ -1467,7 +1455,7 @@ void RGB_Debug_Setup(void)
     led_mappings[2].color_modes[2] = BLUE_MODE;
     led_mappings[2].color_modes[3] = RED_GREEN_MODE;
 
-    // LED 3: 搴曠洏IMU銆佽秴鐢?
+    // LED 3: 底盘IMU、超电
     led_mappings[3].led_index = 3;
     led_mappings[3].device_count = 2;
     led_mappings[3].devices[0].timeout_ptr = NULL;
@@ -1487,20 +1475,20 @@ void RGB_Debug_Setup(void)
     led_mappings[4].devices[0].status_flag_ptr = &Chassis_REF_OK;
     led_mappings[4].color_modes[0] = RED_MODE;
 
-    // ========== 鍒濆鍖?RGB Debug ==========
+    // ========== 初始化 RGB Debug ==========
     rgb_debug_config.rgb_ui = &RGB_UI;
     rgb_debug_config.led_mappings = led_mappings;
     rgb_debug_config.led_count = 5;
-    rgb_debug_config.blink_period = 50;  // 50娆¤鏁?1绉扏50Hz
+    rgb_debug_config.blink_period = 50;  // 50次计数=1秒@50Hz
     RGB_Debug_Init(&rgb_debug_config);
 
-    // ========== 娉ㄥ唽鍔熻兘鐘舵€佹樉绀猴紙鏃犻敊璇椂鏄剧ず锛?==========
+    // ========== 注册功能状态显示（无错误时显示） ==========
 
     // LED 0: 灏忛檧铻虹姸鎬?
     Function_Status_t xtl_status;
     xtl_status.led_index = 0;
     xtl_status.flag_ptr = &XTL_flag;
-    xtl_status.on_color[0] = RGB_goal;  // 寮€鍚細绾㈣壊
+    xtl_status.on_color[0] = RGB_goal;  // 开启：红色
     xtl_status.on_color[1] = 0;
     xtl_status.on_color[2] = 0;
     xtl_status.off_color[0] = 0;        // 鍏抽棴锛氱豢鑹?
@@ -1508,11 +1496,11 @@ void RGB_Debug_Setup(void)
     xtl_status.off_color[2] = 0;
     RGB_Control_Register_Function(xtl_status);
 
-    // LED 1: 鎽╂摝杞姸鎬?
+    // LED 1: 摩擦轮状态
     Function_Status_t mcl_status;
     mcl_status.led_index = 1;
     mcl_status.flag_ptr = &MCL_ON_flag;
-    mcl_status.on_color[0] = RGB_goal;  // 寮€鍚細绾㈣壊
+    mcl_status.on_color[0] = RGB_goal;  // 开启：红色
     mcl_status.on_color[1] = 0;
     mcl_status.on_color[2] = 0;
     mcl_status.off_color[0] = 0;        // 鍏抽棴锛氱豢鑹?
@@ -1520,11 +1508,11 @@ void RGB_Debug_Setup(void)
     mcl_status.off_color[2] = 0;
     RGB_Control_Register_Function(mcl_status);
 
-    // LED 2: 鍚婂皠鐘舵€侊紙鏇挎崲26鑻遍泟鐨勪笂鍙伴樁锛?
+    // LED 2: 吊射状态（替换26英雄的上台阶）
     Function_Status_t diaoshe_status;
     diaoshe_status.led_index = 2;
     diaoshe_status.flag_ptr = &deploy_flag;  // 浣跨敤deploy_flag
-    diaoshe_status.on_color[0] = RGB_goal;   // 寮€鍚細绾㈣壊
+    diaoshe_status.on_color[0] = RGB_goal;   // 开启：红色
     diaoshe_status.on_color[1] = 0;
     diaoshe_status.on_color[2] = 0;
     diaoshe_status.off_color[0] = 0;         // 鍏抽棴锛氱豢鑹?
@@ -1532,11 +1520,11 @@ void RGB_Debug_Setup(void)
     diaoshe_status.off_color[2] = 0;
     RGB_Control_Register_Function(diaoshe_status);
 
-    // LED 3: 鐖嗗彂鐘舵€?
+    // LED 3: 爆发状态
     Function_Status_t boost_status;
     boost_status.led_index = 3;
     boost_status.flag_ptr = &boost_flag;
-    boost_status.on_color[0] = RGB_goal;  // 寮€鍚細绾㈣壊
+    boost_status.on_color[0] = RGB_goal;  // 开启：红色
     boost_status.on_color[1] = 0;
     boost_status.on_color[2] = 0;
     boost_status.off_color[0] = 0;        // 鍏抽棴锛氱豢鑹?
@@ -1544,7 +1532,7 @@ void RGB_Debug_Setup(void)
     boost_status.off_color[2] = 0;
     RGB_Control_Register_Function(boost_status);
 
-    // LED 4: 鑷瀯鐘舵€侊紙鐗规畩澶勭悊锛屼娇鐢ㄨ嚜瀹氫箟鍥炶皟锛?
+    // LED 4: 自瞄状态（特殊处理，使用自定义回调）
     RGB_Control_Register_LED4_Callback(RGB_LED4_Zimiao_Update);
 }
 
@@ -1552,7 +1540,7 @@ void RGB_Debug_Setup(void)
 /* ===== main.c USER CODE 4: ISR callbacks + business functions (verbatim) ===== */
 
 /*******************************************************************************************************
- * can1 涓柇 6涓懇鎿﹁疆鐢垫満
+ * can1 中断 6个摩擦轮电机
  * ************************************************************************************************/
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 8khz
@@ -1616,13 +1604,13 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 8khz
        CAN_1.Send_RM(0x1FF, PID_MCL_UPUP_sp.OUT_PID, PID_MCL_RR_sp.OUT_PID, 0, 0);
 //     CAN_1.Send_RM(0x1FF, PID_MCL_UPUP_sp.OUT_PID, 0, 0, 0);
      MCL_2_motorflag = 0;
-     MCL_MID = (Motor_MCL_L.sp - Motor_MCL_R.sp - Motor_MCL_UP_up.sp + Motor_MCL_LL.sp - Motor_MCL_UP.sp - Motor_MCL_RR.sp) / 6; // 鎽╂摝杞钩鍧囪浆閫燂紝鐢ㄤ簬鍒ゆ柇鎽╂摝锟?
+     MCL_MID = (Motor_MCL_L.sp - Motor_MCL_R.sp - Motor_MCL_UP_up.sp + Motor_MCL_LL.sp - Motor_MCL_UP.sp - Motor_MCL_RR.sp) / 6; // 摩擦轮平均转速，用于判断摩擦�?
    }
   }
 }
 
 /*******************************************************************************************************
- * can2  涓柇鎺ユ敹 yaw pitch  鎷ㄧ洏tx
+ * can2  中断接收 yaw pitch  拨盘tx
  * ************************************************************************************************/
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) // 4khz
@@ -1725,9 +1713,9 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) // 4khz
         Yaw_ab += 360.0f;
       break;
 
-    case (0x120): // 搴曠洏鐘舵€佸弽棣?
+    case (0x120): // 底盘状态反馈
     {
-      // 搴曠洏鐘舵€佹爣蹇椾綅鍦╮x_buf[0]鍜宺x_buf[1]
+      // 底盘状态标志位在rx_buf[0]和rx_buf[1]
       uint16_t Chassis_Status_Flag_Received = CAN_2.rx_buf[0] << 8 | CAN_2.rx_buf[1];
       Chassis_Motor_M1_OK = (Chassis_Status_Flag_Received & CHASSIS_M1_OK_FLAG) ? 1 : 0;
       Chassis_Motor_M2_OK = (Chassis_Status_Flag_Received & CHASSIS_M2_OK_FLAG) ? 1 : 0;
@@ -1736,7 +1724,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) // 4khz
       Chassis_IMU_OK = (Chassis_Status_Flag_Received & CHASSIS_IMU_OK_FLAG) ? 1 : 0;
       Chassis_REF_OK = (Chassis_Status_Flag_Received & CHASSIS_REF_OK_FLAG) ? 1 : 0;
 
-      // 瓒呯數鐢靛帇鍦╮x_buf[2]鍜宺x_buf[3]锛坕nt16_t鏍煎紡锛?
+      // 超电电压在rx_buf[2]和rx_buf[3]（int16_t格式）
       int16_t v_cap_received = (int16_t)((CAN_2.rx_buf[2] << 8) | CAN_2.rx_buf[3]);
       V_Cap_Real = (float)v_cap_received / 100.0f;
       break;
@@ -1761,21 +1749,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     static uint8_t can_scan = 1;
     if (can_scan)
     {
-      // YAW鍜孭ITCH鐢垫満PID璁＄畻
+      // YAW和PITCH电机PID计算
       YAW_PID_Calc();
       PITCH_PID_Calc();
 
-      // 鍙戯拷?锟芥懇鎿﹁疆鏁版嵁
+      // 发�?�摩擦轮数据
 //      CAN_2.Broadcast_Send_LK(0, YAW_PID_OUT, 0, 0);
       CAN_2.Broadcast_Send_LK(PITCH_PID_OUT, YAW_PID_OUT, 0, 0);			
       can_scan = 0;
     }
     else
     {
-      // 鑷瀯鎺у埗
+      // 自瞄控制
        ZM_Control();
       // 鎷ㄧ洏閫昏緫澶勭悊锛屾牴鎹ā寮忚皟锟?
-      // 鎷ㄧ洏瑙掑害妯″紡鏃讹紝鏍规嵁灞曞紑鐘讹拷?锟借皟鏁村閲忕紦鍙橈拷?锟藉害锛岄槻姝㈢獊鍙樺鑷村崱锟?
+      // 遥控器拨盘控�?
       if (BP_MODE == MANG_MODE)
       {
         if (deploy_flag || MYmode == DIAO_SHE_MODE || MYmode == SHANG_XIA_MODE)
@@ -1802,22 +1790,22 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
   else if (htim == &htim7) // 160Hz
   {
-    // Mini pitch榧犳爣璋冩暣
+    // Mini pitch鼠标调整
     Mini_PITCH_Mouse_Adjust();
 
-    // 灞曞紑妯″紡瓒呮椂锟?锟?
+    // 展开模式超时�?�?
     Deploy_Timeout_Check();
 
-    // 鑸垫満纭鍔ㄤ綔鐩稿叧
+    // 舵机确认动作相关
     if(servo_confirm_flag)
     {
         servo_confirm_timer++;
 
-        if(servo_confirm_timer < 30)  // 锟?30涓懆鏈燂紝锟?0.19锟? - 鎶捣鑸垫満
+        if(servo_confirm_timer < 30)  // �?30个周期，�?0.19�? - 抬起舵机
         {
             __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, servo_original_ccr + 900);
         }
-        else if(servo_confirm_timer < 60)  // 30-60涓懆鏈燂紝锟?0.19锟? - 鎭㈠鍘熶綅
+        else if(servo_confirm_timer < 60)  // 30-60个周期，�?0.19�? - 恢复原位
         {
             __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, servo_original_ccr);
         }
@@ -1828,7 +1816,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         }
     }
 
-    // 閬ユ帶鍣ㄦ暟锟?(浜ゆ浛)
+    // 遥控器数�?(交替)
     static uint8_t Send_flag = 0;
     if (Send_flag)
     {
@@ -1852,7 +1840,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 
 
-    // 鏇存柊鎵€鏈夎秴鏃惰鏁板櫒
+    // 更新所有超时计数器
     if (timeout_pitch < 255) timeout_pitch++;
     if (timeout_yaw < 255) timeout_yaw++;
     if (timeout_bopan < 255) timeout_bopan++;
@@ -1865,13 +1853,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     if (timeout_imu < 255) timeout_imu++;
     if (timeout_mini_pitch < 255) timeout_mini_pitch++;
 
-    // 鏇存柊瓒呯數鐢靛帇鏍囧織
+    // 更新超电电压标志
     V_Cap_OK_flag = (V_Cap_Real != 0);
 
-    // 璋冪敤 RGB Debug API 鏇存柊
+    // 调用 RGB Debug API 更新
     RGB_Debug_Update();
 
-    /**淇濇姢妯″紡 */
+    /**保护模式 */
     if (BP_MODE == PROTECT_MODE)
     {
         BP_protect_cansend_flag = 1;
@@ -1879,7 +1867,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         BP_targe = BoPan.mang_inf;
         BP_calc_targe = BoPan.mang_inf;
     }
-    // YAW淇濇姢妯″紡
+    // YAW保护模式
     if (yaw_control_mode == PROTECT_MODE)
     {
       YAW_PID_OUT = 0;
@@ -1889,7 +1877,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       PID_YAW_Erro_IMU_MANG.OUT_I = 0;
     }
 
-    // PITCH淇濇姢妯″紡
+    // PITCH保护模式
     if (pitch_control_mode == PROTECT_MODE)
     {
       Pitch_goal = REAL_PITCH_REF;
@@ -1938,7 +1926,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         aim_mode = 0x00;
       }
 
-      Mini_PC_SendData_ZM2(aim_mode);  // 鍙戯拷?锟借嚜鐬勬ā寮忔暟锟?
+      Mini_PC_SendData_ZM2(aim_mode);  // 发�?�自瞄模式数�?
   }
 }
 
@@ -1957,14 +1945,14 @@ extern "C" void My_Setup(void)
   yaw_control_mode = PROTECT_MODE;
   pitch_control_mode = PROTECT_MODE;
 	RGB_UI.RGB_UI_Init();
-	RGB_Debug_Setup();  // 鍒濆鍖?RGB Debug API
-  HAL_TIM_Base_Start_IT(&htim1); // 鑸垫満瀹氭椂锟?
+	RGB_Debug_Setup();  // 初始化 RGB Debug API
+  HAL_TIM_Base_Start_IT(&htim1); // 舵机定时�?
   HAL_Delay(0);
-  HAL_TIM_Base_Start_IT(&htim9); // 2khz涓绘帶锛宑an2鍙戯拷??
+  HAL_TIM_Base_Start_IT(&htim9); // 2khz主控，can2发�??
   HAL_Delay(0);
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_Delay(0);
-  HAL_TIM_Base_Start_IT(&htim8); // 40hz 0x13id鍙戯拷??
+  HAL_TIM_Base_Start_IT(&htim8); // 40hz 0x13id发�??
   HAL_Delay(0);
   HAL_TIM_Base_Start_IT(&htim6);//10hz閬ユ帶锟?
   HAL_Delay(0);
@@ -1975,7 +1963,7 @@ extern "C" void My_Setup(void)
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   Mini_PC_UART_Init();
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // 浣胯兘鐢垫満椹卞姩
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // 使能电机驱动
 //	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
   HAL_Delay(1500);
   Mini_Pitch_MODE = DUZHUAN_MODE;
@@ -2011,25 +1999,25 @@ extern "C" void My_Loop(void)
 //		 INFO("%d\r\n",Motor_LK6010_Yaw.mang);
 /*鎽╂摝杞數鏈哄弽棣堣浆閫?*/
 //     INFO("%d,%d,%d,%d,%d,%d\r\n", Motor_MCL_UP_up.sp, Motor_MCL_R.sp, -Motor_MCL_L.sp, Motor_MCL_RR.sp, -Motor_MCL_LL.sp, Motor_MCL_UP.sp);
-/*鎽╂摝杞崟涓數鏈哄弽棣堣浆閫?*/
+/*摩擦轮单个电机反馈转速*/
     // INFO("%d\r\n", Motor_MCL_UP_up.sp);
-/*灏勯€?*/
+/*射速*/
 //      INFO("%.2f\r\n", shoot_sp);
-/*鑷瀯*/
+/*自瞄*/
 	  // INFO("%.2f,%.2f,%.2f,%.2f,%d,%d,%d\r\n", Yaw_ZM,yaw_cont.continuous_yaw,Pitch_ZM,hipnuc_raw.hi91.pitch,SuperPower.mode,response.Fire_Flag,is_mouse_single_clicked);
-/*CH010闄€铻轰华涓夎酱瑙掑害*/    
+/*CH010陀螺仪三轴角度*/
 //     INFO("%.2f,%.2f,%.2f,%.2f\r\n",  hipnuc_raw.hi91.roll, hipnuc_raw.hi91.yaw, hipnuc_raw.hi91.pitch,yaw_cont.continuous_yaw);
 /*CH010闄€铻轰华鍥涘厓鏁?*/    
 		// INFO("%.2f,%.2f,%.2f,%.2f\r\n", hipnuc_raw.hi91.quat[0],hipnuc_raw.hi91.quat[1],hipnuc_raw.hi91.quat[2],hipnuc_raw.hi91.quat[3]);
-/*CH010闄€铻轰华瑙掗€熷害*/    
+/*CH010陀螺仪角速度*/
     // INFO("%.2f\r\n",hipnuc_raw.hi91.gyr[0]);
 /*榧犳爣鏁版嵁*/
     // INFO("%d,%d\r\n", YK.shubiao.x, YK.shubiao.y);
-/*鐑噺鏍囧織*/
+/*热量标志*/
     // INFO("%d\r\n", heat_flag);
-/*鏋彛浣嶇疆淇℃伅*/
+/*枪口位置信息*/
 	  // INFO("%.2f\r\n", Robot_pos_u.f_pos);锛?
-/*2006灏弍itch鍐呭鐜洰鏍囧疄闄?*/
+/*2006小pitch内外环目标实际*/
   //  INFO("%d,%d\r\n",Mini_Pitch_targe, Mini_Pitch_2006.mang_inf);
 		//  INFO("%.2f,%d\r\n",PID_Mini_Pitch_2006_mang.OUT_PID, Mini_Pitch_2006.sp);
 /*绾㈣摑鏂?*/
@@ -2039,37 +2027,37 @@ extern "C" void My_Loop(void)
     // INFO("%d\r\n", duoji);
     HAL_Delay(10);
 
-    // 妯″紡搴旂敤锟?
+    // 模式应用�?
     MYMODE_while_application_layer();
 
-    // 锟?鍚懇鎿﹁疆閫昏緫锛岃繑鍥炴懇鎿﹁疆鏄惁鍚姩鏍囧織
+    // �?启摩擦轮逻辑，返回摩擦轮是否启动标志
     uint8_t mcl_on = MCL_Logic();
 
-    // 鎷ㄧ洏閫昏緫锛屾牴鎹懇鎿﹁疆鐘讹拷?锟藉喅瀹氭槸鍚︽嫧锟?
+    // 拨盘逻辑，根据摩擦轮状�?�决定是否拨�?
     BP_Logic(mcl_on);
 
-    // Mini_Pitch_2006鎺у埗閫昏緫
+    // Mini_Pitch_2006控制逻辑
     Mini_Pitch_2006_Logic();
 
-    // 鑸垫満PWM杈撳嚭锛堜粎telescope锛宮ini_pitch宸叉敼鐢?006鐢垫満锛?
+    // 舵机PWM输出（仅telescope，mini_pitch已改用2006电机）
     Servo_PWM_Output();
 
-    // 閿洏鐗规畩鍔熻兘澶勭悊
+    // 键盘特殊功能处理
     Keyboard_Special_Func();
 
-    // PITCH杞存帶鍒讹拷?锟借緫
+    // PITCH轴控制�?�辑
     PITCH_Logic();
 
-    // YAW杞存帶鍒讹拷?锟借緫
+    // YAW轴控制�?�辑
     YAW_Logic();
 
-    // 鎺夊ご澶勭悊鍑芥暟
+    // 掉头处理函数
     YAW_Turn_Handle();
 
     // 澶嶄綅鍑芥暟
     Reset();
 
-    // 浜戝彴鏉垮彂閫佹爣蹇椾綅缁欏簳鐩樻澘
+    // 云台板发送标志位给底盘板
     YT_Tx_static_Flag = (bool)deploy_flag ? (YT_Tx_static_Flag | 0x0001) : (YT_Tx_static_Flag & (uint16_t)~1);
     YT_Tx_static_Flag = XTL_flag ? (YT_Tx_static_Flag | 0x0002) : (YT_Tx_static_Flag & (uint16_t)~2);
     YT_Tx_static_Flag = SP_Turn_Flag ? (YT_Tx_static_Flag | SP_TURN_FLAG) : (YT_Tx_static_Flag & ~SP_TURN_FLAG);

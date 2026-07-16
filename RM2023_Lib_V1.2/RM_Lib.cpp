@@ -181,6 +181,18 @@ void Gimbal_Zhou::gyro_update(bool zimiao)
     }
 }
 
+// MANG 模式单组计算(与原 YAW/PITCH MANG 分支逐行等价):
+//   外环 PID_update_LP(goal, 角度反馈, lp_mang_wai) -> 内环 PID_update(外.OUT, gyro,不带LP) -> 符号
+// 无自瞄切换、无清对方组(MANG 本就单组)。goal 处理留应用层。
+float Gimbal_Zhou::Mang_calc(float g)
+{
+    goal = g;
+    pid_mang_wai->PID_update_LP(goal, *fankui_wai_angle, lp_mang_wai);
+    pid_mang_nei->PID_update(pid_mang_wai->OUT_PID, *fankui_gyro);
+    output = output_sign * pid_mang_nei->OUT_PID;
+    return output;
+}
+
 /**************************************** C A N **********************************************************/
 void USER_CAN::Init(uint16_t t, uint16_t x)
 {
