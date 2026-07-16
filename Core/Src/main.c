@@ -28,17 +28,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "my_main.h"
-#include "RM_Lib.h"
-#include "communication.h"
-#include "hipnuc_dec.h"
-#include "CP_System.h"
-#include "rgb_debug.h"
-#include "stm32f4xx_it.h"
-extern Yaw_Continuous_t yaw_cont;
-extern float Yaw_Continuous_Update(float raw_yaw);
-extern void Yaw_Continuous_Reset(void);
-extern float Get_Continuous_Yaw(void);
-/*28215锟?61050*/
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
