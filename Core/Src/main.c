@@ -29,7 +29,6 @@
 /* USER CODE BEGIN Includes */
 #include "RM_Lib.h"
 #include "communication.h"
-#include "my_math.h"
 #include "hipnuc_dec.h"
 #include "CP_System.h"
 #include "rgb_debug.h"
@@ -1694,12 +1693,8 @@ void RGB_Debug_Setup(void)
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-Vision_process_t Vision_process;
-extKalman_t Gimbal_Pitch, Gimbal_Yaw, vision_angleY_KF, vision_speedY_KF, vision_absolute_Yaw_Kal, vision_distance_KF;
-LOW_Pass_Filter vision_speedY_LPF;
-moving_Average_Filter vision_angleY_MF, vision_speedY_MF, vision_distance_MF;
-Anti_top_Data TOP_Data = {.cnt_max = 300};  // cnt_max 默认值 300(原为结构体内 C++ 默认初始化,去C++化后移此处)
-Kf kalman_speedYaw1, kalman_accel1, kalman_distend1;
+// 原视觉滤波/防陀螺全局变量(Vision_process/extKalman/LOW_Pass_Filter/moving_Average_Filter/TOP_Data/Kf 实例)
+// 均为死代码(全工程零活跃读写),随 my_math 模块一并移除。
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/

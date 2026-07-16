@@ -46,37 +46,6 @@ bool IsCrc16Good(const unsigned char* pData, uint16_t nLength)
     return crc_itu16_verify(pData, nLength);
 }
 
-/**************************************** Kf (Kalman) **************************************************/
-// class Kf 的成员实现从 my_math.c 迁入此处(去 C++ 化:让 my_math.c 回归纯 C,逻辑一字未改)。
-// class Kf 声明见 my_math.h(#ifdef __cplusplus 守卫内);本文件当 C++ 编,可见该类与 Vision_process。
-double Kf::KalmanFilter(const double ResrcData,double ProcessNoise_Q,double MeasureNoise_R,uint8_t kind)
-{
-   double R = MeasureNoise_R;
-   double Q = ProcessNoise_Q;
-   double x_mid;
-   double x_now;
-   double p_mid ;
-   double p_now;
-   double kg;
-	
-	 if(Vision_process.eeror==1)
-	 {
-		 p_last = 0;
-     x_last = 0;
-	 }
-	 
-   x_mid=x_last;
-   p_mid=p_last+Q;
-   kg=p_mid/(p_mid+R);
-   x_now=x_mid+kg*(ResrcData-x_mid);
-
-   p_now=(1-kg)*p_mid;
-   p_last = p_now;
-   x_last = x_now;
-   return x_now;
-}
-
-
 /**************************************** C A N **********************************************************/
 void USER_CAN::Init(uint16_t t, uint16_t x)
 {

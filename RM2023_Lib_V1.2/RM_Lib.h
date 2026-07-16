@@ -13,7 +13,6 @@
 #include "can.h" // 这行报错请屏蔽
 #include "main.h"
 #include "math.h"
-#include "my_math.h"
 #include "spi.h" // 这行报错请屏蔽
 #include "stdio.h"
 #include "string.h"

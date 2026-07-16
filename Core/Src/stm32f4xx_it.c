@@ -24,7 +24,6 @@
 /* USER CODE BEGIN Includes */
 #include "RM_Lib.h"
 #include "communication.h"
-#include "my_math.h"
 #include "string.h"
 #include "hipnuc_dec.h"
 #include "main.h"

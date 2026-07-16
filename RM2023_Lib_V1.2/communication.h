@@ -9,7 +9,7 @@
 #include "string.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include "my_math.h"
+#include <math.h>
 
 #define MINI_PC_BUF_SIZE 		  128		// 数组大小，可修改
 
