@@ -413,7 +413,9 @@ class RUDDER_DiPan
 
 int16_t float_to_int16(float a, float a_max, float a_min, int16_t b_max, int16_t b_min);
 float int16_to_float(int16_t a, int16_t a_max, int16_t a_min, float b_max, float b_min);
+#ifndef LIMIT
 #define LIMIT(x, min, max) ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
+#endif
 // #define NL -3
 // #define NM -2
 // #define NS -1

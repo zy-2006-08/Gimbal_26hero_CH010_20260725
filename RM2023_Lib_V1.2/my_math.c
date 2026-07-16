@@ -1,5 +1,4 @@
 #include "my_math.h"
-#include "RM_Lib.h"
 #include "communication.h"
 #include "stm32f4xx_hal.h"
 
@@ -11,7 +10,7 @@ void Filter_IIRLPF(float in, float *out, float LpfAttFactor)
 
 extern Kf  kalman_speedYaw1,kalman_accel1,kalman_distend1;
 
-float RampFloat(float final, float now, float ramp)//Öð½¥µ÷ÕûÒ»¸öÖµ£¨now£©½Ó½üÄ¿±êÖµ£¨final£©£¬²¢¿ØÖÆµ÷ÕûµÄËÙÂÊ
+float RampFloat(float final, float now, float ramp)//ï¿½ð½¥µï¿½ï¿½ï¿½Ò»ï¿½ï¿½Öµï¿½ï¿½nowï¿½ï¿½ï¿½Ó½ï¿½Ä¿ï¿½ï¿½Öµï¿½ï¿½finalï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
 	float buffer = 0;
 	
@@ -35,21 +34,21 @@ float RampFloat(float final, float now, float ramp)//Öð½¥µ÷ÕûÒ»¸öÖµ£¨now£©½Ó½üÄ¿
 	return buffer;	
 }
 
-//»¬¶¯ÂË²¨
+//ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½
 float Slope(float M ,float *queue ,uint16_t len)
 {
 	float sum=0;
 	float res=0;
   
-		//¶ÓÁÐÒÑÂú£¬FIFO¡£
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½FIFOï¿½ï¿½
 		for(uint16_t i=0;i<len-1;i++)
 		{
 			queue[i] = queue[i+1];
-			//¸üÐÂ¶ÓÁÐ
+			//ï¿½ï¿½ï¿½Â¶ï¿½ï¿½ï¿½
 		}
 		queue[len-1] = M;
     
-	//¸üÐÂÍê¶ÓÁÐ
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	for(uint16_t j=0;j<len;j++)
 	{
 		sum+=queue[j];
@@ -59,11 +58,11 @@ float Slope(float M ,float *queue ,uint16_t len)
 	return res;
 }
 
-uint32_t Vision_get_interval(uint8_t lost_flag)//»ñÈ¡Á½Ö¡Ö®¼äµÄÊ±¼ä¼ä¸ô£¨µ¥Î»£ººÁÃë£©
+uint32_t Vision_get_interval(uint8_t lost_flag)//ï¿½ï¿½È¡ï¿½ï¿½Ö¡Ö®ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ë£©
 {
 	uint32_t time_ms;
 	uint32_t now_ms, last_ms;
-	now_ms =	HAL_GetTick();//»ñÈ¡ÓëÉÏÒ»Ö¡µÄ¼ä¸ôÊ±¼ä
+	now_ms =	HAL_GetTick();//ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ò»Ö¡ï¿½Ä¼ï¿½ï¿½Ê±ï¿½ï¿½
 	if(lost_flag >= 1)
 	{
 		last_ms = now_ms;
@@ -102,28 +101,28 @@ float get_auto_speed(moving_Average_Filter *AUTO_MF, float angle)
 
 void kalmanCreate(KFP *kfp,float T_Q,float T_R)
 {
-	  kfp-> LastP=0;//ÉÏ´Î¹ÀËãÐ­·½²î ³õÊ¼»¯ÖµÎª0.02
-    kfp-> Now_P=0;//µ±Ç°¹ÀËãÐ­·½²î ³õÊ¼»¯ÖµÎª0
-    kfp-> out=0;//¿¨¶ûÂüÂË²¨Æ÷Êä³ö ³õÊ¼»¯ÖµÎª0
-    kfp-> Kg=0;//¿¨¶ûÂüÔöÒæ ³õÊ¼»¯ÖµÎª0
-    kfp-> Q=T_Q;//¹ý³ÌÔëÉùÐ­·½²î ³õÊ¼»¯ÖµÎª0.005
-    kfp-> R=T_R;//¹Û²âÔëÉùÐ­·½²î ³õÊ¼»¯ÖµÎª0.543
+	  kfp-> LastP=0;//ï¿½Ï´Î¹ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0.02
+    kfp-> Now_P=0;//ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0
+    kfp-> out=0;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0
+    kfp-> Kg=0;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0
+    kfp-> Q=T_Q;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0.005
+    kfp-> R=T_R;//ï¿½Û²ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0.543
 }
 
 float kalmanFilter(KFP *kfp,float input)
 {
-     //Ô¤²âÐ­·½²î·½³Ì£ºkÊ±¿ÌÏµÍ³¹ÀËãÐ­·½²î = k-1Ê±¿ÌµÄÏµÍ³Ð­·½²î + ¹ý³ÌÔëÉùÐ­·½²î
+     //Ô¤ï¿½ï¿½Ð­ï¿½ï¿½ï¿½î·½ï¿½Ì£ï¿½kÊ±ï¿½ï¿½ÏµÍ³ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ = k-1Ê±ï¿½Ìµï¿½ÏµÍ³Ð­ï¿½ï¿½ï¿½ï¿½ + ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½
      kfp->Now_P = kfp->LastP + kfp->Q;
-     //¿¨¶ûÂüÔöÒæ·½³Ì£º¿¨¶ûÂüÔöÒæ = kÊ±¿ÌÏµÍ³¹ÀËãÐ­·½²î / £¨kÊ±¿ÌÏµÍ³¹ÀËãÐ­·½²î + ¹Û²âÔëÉùÐ­·½²î£©
+     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æ·½ï¿½Ì£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ = kÊ±ï¿½ï¿½ÏµÍ³ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ / ï¿½ï¿½kÊ±ï¿½ï¿½ÏµÍ³ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ + ï¿½Û²ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½î£©
      kfp->Kg = kfp->Now_P / (kfp->Now_P + kfp->R);
-     //¸üÐÂ×îÓÅÖµ·½³Ì£ºkÊ±¿Ì×´Ì¬±äÁ¿µÄ×îÓÅÖµ = ×´Ì¬±äÁ¿µÄÔ¤²âÖµ + ¿¨¶ûÂüÔöÒæ * £¨²âÁ¿Öµ - ×´Ì¬±äÁ¿µÄÔ¤²âÖµ£©
-     kfp->out = kfp->out + kfp->Kg * (input -kfp->out);//ÒòÎªÕâÒ»´ÎµÄÔ¤²âÖµ¾ÍÊÇÉÏÒ»´ÎµÄÊä³öÖµ
-     //¸üÐÂÐ­·½²î·½³Ì: ±¾´ÎµÄÏµÍ³Ð­·½²î¸¶¸ø kfp->LastP ÍþÏÂÒ»´ÎÔËËã×¼±¸¡£
+     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½Ì£ï¿½kÊ±ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ = ×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½Öµ + ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ - ×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½Öµï¿½ï¿½
+     kfp->out = kfp->out + kfp->Kg * (input -kfp->out);//ï¿½ï¿½Îªï¿½ï¿½Ò»ï¿½Îµï¿½Ô¤ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Îµï¿½ï¿½ï¿½ï¿½Öµ
+     //ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½î·½ï¿½ï¿½: ï¿½ï¿½ï¿½Îµï¿½ÏµÍ³Ð­ï¿½ï¿½ï¿½î¸¶ï¿½ï¿½ kfp->LastP ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½
      kfp->LastP = (1-kfp->Kg) * kfp->Now_P;
      return kfp->out;
 }
 
-// ¿¨¶ûÂü
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  void KalmanCreate(extKalman_t *p,float T_Q,float T_R)
 {
     p->X_last = (float)0;
@@ -137,15 +136,15 @@ float kalmanFilter(KFP *kfp,float input)
 }
  float KalmanFilter(extKalman_t *p,float dat)
 {
-    p->X_mid =p->A*p->X_last;                     //°Ù¶È¶ÔÓ¦¹«Ê½(1)    x(k|k-1) = A*X(k-1|k-1)+B*U(k)+W(K)     ×´Ì¬·½³Ì
-    p->P_mid = p->A*p->P_last+p->Q;               //°Ù¶È¶ÔÓ¦¹«Ê½(2)    p(k|k-1) = A*p(k-1|k-1)*A'+Q            ¹Û²â·½³Ì
-		p->kg = p->P_mid/(p->P_mid+p->R);             //°Ù¶È¶ÔÓ¦¹«Ê½(4)    kg(k) = p(k|k-1)*H'/(H*p(k|k-1)*H'+R)   ¸üÐÂ¿¨¶ûÂüÔöÒæ
-		p->X_now = p->X_mid + p->kg*(dat-p->X_mid);   //°Ù¶È¶ÔÓ¦¹«Ê½(3)    x(k|k) = X(k|k-1)+kg(k)*(Z(k)-H*X(k|k-1))  ÐÞÕý¹À¼ÆÖµ
-    p->P_now = (1-p->kg)*p->P_mid;                //°Ù¶È¶ÔÓ¦¹«Ê½(5)    p(k|k) = (I-kg(k)*H)*P(k|k-1)           ¸üÐÂºóÑé¹À¼ÆÐ­·½²î
-    p->P_last = p->P_now;                         //×´Ì¬¸üÐÂ
+    p->X_mid =p->A*p->X_last;                     //ï¿½Ù¶È¶ï¿½Ó¦ï¿½ï¿½Ê½(1)    x(k|k-1) = A*X(k-1|k-1)+B*U(k)+W(K)     ×´Ì¬ï¿½ï¿½ï¿½ï¿½
+    p->P_mid = p->A*p->P_last+p->Q;               //ï¿½Ù¶È¶ï¿½Ó¦ï¿½ï¿½Ê½(2)    p(k|k-1) = A*p(k-1|k-1)*A'+Q            ï¿½Û²â·½ï¿½ï¿½
+		p->kg = p->P_mid/(p->P_mid+p->R);             //ï¿½Ù¶È¶ï¿½Ó¦ï¿½ï¿½Ê½(4)    kg(k) = p(k|k-1)*H'/(H*p(k|k-1)*H'+R)   ï¿½ï¿½ï¿½Â¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		p->X_now = p->X_mid + p->kg*(dat-p->X_mid);   //ï¿½Ù¶È¶ï¿½Ó¦ï¿½ï¿½Ê½(3)    x(k|k) = X(k|k-1)+kg(k)*(Z(k)-H*X(k|k-1))  ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
+    p->P_now = (1-p->kg)*p->P_mid;                //ï¿½Ù¶È¶ï¿½Ó¦ï¿½ï¿½Ê½(5)    p(k|k) = (I-kg(k)*H)*P(k|k-1)           ï¿½ï¿½ï¿½Âºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½
+    p->P_last = p->P_now;                         //×´Ì¬ï¿½ï¿½ï¿½ï¿½
     p->X_last = p->X_now;
 		
-    return p->X_now;							  //Êä³öÔ¤²â½á¹ûx(k|k)
+    return p->X_now;							  //ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½x(k|k)
 }
 
 void KalmanClear(extKalman_t *p)
@@ -158,40 +157,15 @@ void KalmanClear(extKalman_t *p)
     p->X_mid = p->X_last;
 }
 
-/*******************************************Ô¤²â*******************************/
+/*******************************************Ô¤ï¿½ï¿½*******************************/
 /**
-  * @brief ¿¨¶ûÂüÂË²¨º¯Êý
-  * @other 	Q£º¹ý³ÌÔëÉù£¬QÔö´ó£¬¶¯Ì¬ÏìÓ¦±ä¿ì£¬ÊÕÁ²ÎÈ¶¨ÐÔ±ä»µ
-	R£º²âÁ¿ÔëÉù£¬RÔö´ó£¬¶¯Ì¬ÏìÓ¦±äÂý£¬ÊÕÁ²ÎÈ¶¨ÐÔ±äºÃ
+  * @brief ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½
+  * @other 	Qï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Qï¿½ï¿½ï¿½ó£¬¶ï¿½Ì¬ï¿½ï¿½Ó¦ï¿½ï¿½ì£¬ï¿½ï¿½ï¿½ï¿½ï¿½È¶ï¿½ï¿½Ô±ä»µ
+	Rï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Rï¿½ï¿½ï¿½ó£¬¶ï¿½Ì¬ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¶ï¿½ï¿½Ô±ï¿½ï¿½
   */
-double Kf::KalmanFilter(const double ResrcData,double ProcessNoise_Q,double MeasureNoise_R,uint8_t kind)
-{
-   double R = MeasureNoise_R;
-   double Q = ProcessNoise_Q;
-   double x_mid;
-   double x_now;
-   double p_mid ;
-   double p_now;
-   double kg;
-	
-	 if(Vision_process.eeror==1)
-	 {
-		 p_last = 0;
-     x_last = 0;
-	 }
-	 
-   x_mid=x_last;
-   p_mid=p_last+Q;
-   kg=p_mid/(p_mid+R);
-   x_now=x_mid+kg*(ResrcData-x_mid);
+// Kf::KalmanFilter(class Kf æˆå‘˜)å®žçŽ°å·²ç§»è‡³ RM_Lib.cpp(åŽ» C++ åŒ–:my_math.c å›žå½’çº¯ C)ã€‚
 
-   p_now=(1-kg)*p_mid;
-   p_last = p_now;
-   x_last = x_now;
-   return x_now;
-}
-
-float Get_Diff(uint8_t queue_len, QueueObj *Data,float add_data)//¼ÆËãÐÂÊý¾ÝÓë¶ÓÁÐÆ½¾ùÖµÖ®¼äµÄ²îÒì£¬²¢½«Æä·µ»Ø×÷Îª½á¹û
+float Get_Diff(uint8_t queue_len, QueueObj *Data,float add_data)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ÖµÖ®ï¿½ï¿½Ä²ï¿½ï¿½ì£¬ï¿½ï¿½ï¿½ï¿½ï¿½ä·µï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½
 {
     Data->queueTotal-=Data->queue[Data->nowLength];
     Data->queueTotal+=add_data;
@@ -201,7 +175,7 @@ float Get_Diff(uint8_t queue_len, QueueObj *Data,float add_data)//¼ÆËãÐÂÊý¾ÝÓë¶Ó
 	
     Data->nowLength++;
 	
-    if(Data->full_flag==0)//³õÊ¼¶ÓÁÐÎ´Âú
+    if(Data->full_flag==0)//ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½
     {
         Data->aver_num=Data->queueTotal/Data->nowLength;
     }
@@ -220,10 +194,10 @@ float Get_Diff(uint8_t queue_len, QueueObj *Data,float add_data)//¼ÆËãÐÂÊý¾ÝÓë¶Ó
 }
 
 /**
-* @brief Çå¿Õ¶ÓÁÐ
+* @brief ï¿½ï¿½Õ¶ï¿½ï¿½ï¿½
 * @param void
 * @return void
-*	ÒÔ¶ÓÁÐµÄÂß¼­
+*	ï¿½Ô¶ï¿½ï¿½Ðµï¿½ï¿½ß¼ï¿½
 */
 void Clear_Queue(QueueObj* queue)
 {
@@ -248,17 +222,17 @@ void  Vision_Normal(float angle)
 	Vision_process.rx_time_fps=Vision_process.rx_time_now-Vision_process.rx_time_prev;
 	Vision_process.rx_time_prev=Vision_process.rx_time_now;
 	
-	Vision_process.speed_get_last = Get_Diff(3,&Vision_process.speed_queue,angle);//yaw½ÇËÙ¶È
-	Vision_process.speed_get_last = 40.0*(Vision_process.speed_get_last/Vision_process.rx_time_fps); //Ã¿ºÁÃë
+	Vision_process.speed_get_last = Get_Diff(3,&Vision_process.speed_queue,angle);//yawï¿½ï¿½ï¿½Ù¶ï¿½
+	Vision_process.speed_get_last = 40.0*(Vision_process.speed_get_last/Vision_process.rx_time_fps); //Ã¿ï¿½ï¿½ï¿½ï¿½
 	Vision_process.speed_get = kalman_speedYaw1.KalmanFilter(Vision_process.speed_get_last,0.001,11,0);
   Vision_process.speed_get = LIMIT(Vision_process.speed_get , -2.0 , 2.0);
 		
-	Vision_process.accel_get = Get_Diff(3,&Vision_process.accel_queue,Vision_process.speed_get);//yaw½Ç¼ÓËÙ¶È
-  Vision_process.accel_get = 50.0*(Vision_process.accel_get/Vision_process.rx_time_fps);//Ã¿ºÁÃë
+	Vision_process.accel_get = Get_Diff(3,&Vision_process.accel_queue,Vision_process.speed_get);//yawï¿½Ç¼ï¿½ï¿½Ù¶ï¿½
+  Vision_process.accel_get = 50.0*(Vision_process.accel_get/Vision_process.rx_time_fps);//Ã¿ï¿½ï¿½ï¿½ï¿½
   Vision_process.accel_get = kalman_accel1.KalmanFilter(Vision_process.accel_get,0.001,11,0);
 	Vision_process.accel_get = LIMIT(Vision_process.accel_get , -1.0 , 1.0);
 	
-	if(isnan(Vision_process.speed_get)||isnan(Vision_process.accel_get)) //³ö´í
+	if(isnan(Vision_process.speed_get)||isnan(Vision_process.accel_get)) //ï¿½ï¿½ï¿½ï¿½
 	{
 			LPF_Clear(&vision_speedY_LPF);
 			average_clear(&vision_angleY_MF);
@@ -271,12 +245,12 @@ void  Vision_Normal(float angle)
     Clear_Queue(&Vision_process.accel_queue);
 		Vision_process.eeror=1;
 		Vision_process.feedforwaurd_angle = 0;
-    Vision_process.predict_angle = 0;//Çå0Ô¤²â½Ç
+    Vision_process.predict_angle = 0;//ï¿½ï¿½0Ô¤ï¿½ï¿½ï¿½
 		Vision_process.speed_get_last=0;
 		Vision_process.accel_get=0;
 		Vision_process.speed_get=0;
 	}	
-	else if((abs(Vision_process.speed_get)==2.0)&&(abs(Vision_process.accel_get)==1.0)&&(abs(Vision_process.predict_angle)==Vision_process.predict_angle_limt))//³¬·¶Î§
+	else if((abs(Vision_process.speed_get)==2.0)&&(abs(Vision_process.accel_get)==1.0)&&(abs(Vision_process.predict_angle)==Vision_process.predict_angle_limt))//ï¿½ï¿½ï¿½ï¿½Î§
 	{				
 			LPF_Clear(&vision_speedY_LPF);
 			average_clear(&vision_angleY_MF);
@@ -289,7 +263,7 @@ void  Vision_Normal(float angle)
     Clear_Queue(&Vision_process.accel_queue);
 		Vision_process.eeror=1;
 		Vision_process.feedforwaurd_angle = 0;
-    Vision_process.predict_angle = 0;//Çå0Ô¤²â½Ç
+    Vision_process.predict_angle = 0;//ï¿½ï¿½0Ô¤ï¿½ï¿½ï¿½
 		Vision_process.speed_get_last=0;
 		Vision_process.accel_get=0;
 		Vision_process.speed_get=0;
@@ -306,10 +280,10 @@ void  Vision_Normal(float angle)
 		}			
 	
 		judge_stop();
-		//ÓÐ±¨´íËùÒÔ×¢ÊÍµôÁË
+		//ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¢ï¿½Íµï¿½ï¿½ï¿½
 //		Vision_process.feedforwaurd_angle = acc_use * Vision_process.accel_get;
 //		Vision_process.predict_angle = RampFloat(Vision_process.predict_angle, predic_use * (1.2f*Vision_process.speed_get*response.distance+1.2f*dir_factor*Vision_process.feedforwaurd_angle*response.distance), 0.3);
-//		Vision_process.predict_angle = predic_use * (1.2f*Vision_process.speed_get*response.distance+1.2f*dir_factor*Vision_process.feedforwaurd_angle*response.distance) ;//ËÙ¶È1.1£¬¼ÓËÙ¶È3
+//		Vision_process.predict_angle = predic_use * (1.2f*Vision_process.speed_get*response.distance+1.2f*dir_factor*Vision_process.feedforwaurd_angle*response.distance) ;//ï¿½Ù¶ï¿½1.1ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½3
 //		Vision_process.predict_angle = LIMIT(Vision_process.predict_angle , -Vision_process.predict_angle_limt, Vision_process.predict_angle_limt);
 	}
 }
@@ -317,7 +291,7 @@ void  Vision_Normal(float angle)
 void judge_stop()
 {
 	uint16_t frist_time,second_time;
-	if((Vision_process.speed_get * Vision_process.accel_get)<0.0f)//¾²Ö¹
+	if((Vision_process.speed_get * Vision_process.accel_get)<0.0f)//ï¿½ï¿½Ö¹
 	{
 		frist_time = HAL_GetTick();
 		if(frist_time-second_time<20)
@@ -342,7 +316,7 @@ void Predict_anti_top_get_circle(void)
 	
 	tick_ms = (int)(temp - Anti_top_tick);
 	
-	if(tick_ms<30)//msµÄÐ¡ÍÓÂÝ´óÌå¿´×÷²»´æÔÚ£¬È¥µô
+	if(tick_ms<30)//msï¿½ï¿½Ð¡ï¿½ï¿½ï¿½Ý´ï¿½ï¿½å¿´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú£ï¿½È¥ï¿½ï¿½
 	{
 		return;
 	}
@@ -373,7 +347,7 @@ int8_t Predict_Anti_Top_Binary_judge(float yaw_angle)
 	return 0;
 }
 
-void Predict_anti_top_get_binary(float binary_l, float binary_h)//Í¨¹ý´«ÈëµÄ²ÎÊýÉèÖÃTOP_Data½á¹¹ÌåÖÐÓë¶þ½øÖÆ·¶Î§Ïà¹ØµÄ±äÁ¿Öµ£¬°üÀ¨ÏÂÏÞ¡¢ÉÏÏÞºÍÖÐ¼äÖµ¡£ÕâÐ©ÖµÓÃÓÚºóÐøµÄÔ¤²âºÍ´¦Àí¹ý³Ì
+void Predict_anti_top_get_binary(float binary_l, float binary_h)//Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½TOP_Dataï¿½á¹¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ·ï¿½Î§ï¿½ï¿½ØµÄ±ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¡ï¿½ï¿½ï¿½ï¿½Þºï¿½ï¿½Ð¼ï¿½Öµï¿½ï¿½ï¿½ï¿½Ð©Öµï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½Í´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
 	TOP_Data.binary_low = binary_l;
 	TOP_Data.binary_high = binary_h;
@@ -382,7 +356,7 @@ void Predict_anti_top_get_binary(float binary_l, float binary_h)//Í¨¹ý´«ÈëµÄ²ÎÊý
 
 void Predict_anti_top_get_speed(void)
 {
-	TOP_Data.top_speed = (TOP_Data.binary_high+TOP_Data.binary_low)/TOP_Data.top_circle;//·´ÍÓÂÝËÙ¶È¼ÆËã
+	TOP_Data.top_speed = (TOP_Data.binary_high+TOP_Data.binary_low)/TOP_Data.top_circle;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È¼ï¿½ï¿½ï¿½
 }
 
 void Predict_Anti_Top_binary_update(float now_yaw)
@@ -409,7 +383,7 @@ void Predict_Anti_Top_Cal_all(float binary_first, float binary_second)//shang zh
 {
 	float binary_l, binary_h;
 	
-	if(fabs(binary_first-binary_second)<0.01f)//Èç¹û±ß½çÏà²îÌ«½ü£¬µ±×÷Õðµ´´¦Àí
+	if(fabs(binary_first-binary_second)<0.01f)//ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½ï¿½ï¿½Ì«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ðµ´´ï¿½ï¿½ï¿½
 	{
 		return;
 	}
@@ -417,7 +391,7 @@ void Predict_Anti_Top_Cal_all(float binary_first, float binary_second)//shang zh
 	if(binary_first-binary_second > 0.0f) TOP_Data.flag1=1;
 	else if(binary_first-binary_second < 0.0f) TOP_Data.flag1=-1;
 	
-	//»ñÈ¡ÍÓÂÝÖÜÆÚ
+	//ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	Predict_anti_top_get_circle();
 	
 	binary_h = RP_MAX(binary_first, binary_second);
@@ -486,7 +460,7 @@ float Predict_Anti_Top_Judge_Yaw(float auto_yaw)
 #define Length   10
 float buffer_num[Length];
 float now_num;
-float sum; 						/*<! ¿í¶ÈºÍÊý×ÖºÍ */
+float sum; 						/*<! ï¿½ï¿½ï¿½Èºï¿½ï¿½ï¿½ï¿½Öºï¿½ */
 int flag,where_num;
 
 void	MeanFilter_Init()
@@ -501,10 +475,10 @@ void	MeanFilter_Init()
 float MeanFilter(float num)
 {
    now_num = num;
-   sum -= buffer_num[where_num];			  /*<! sum¼õÈ¥¾ÉÖµ */
-   sum += num;													/*<! sum¼ÓÉÏÐÂÖµ */
+   sum -= buffer_num[where_num];			  /*<! sumï¿½ï¿½È¥ï¿½ï¿½Öµ */
+   sum += num;													/*<! sumï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ */
    buffer_num[where_num++] = num;
-   flag > 0? flag-- : 0;								/*<!flag=LengthÈ»ºóµÝ¼õ±£Ö¤¿í¶ÈÄÚ¶¼ÊÇÓÐÐ§²¨Öµ */
+   flag > 0? flag-- : 0;								/*<!flag=LengthÈ»ï¿½ï¿½Ý¼ï¿½ï¿½ï¿½Ö¤ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½Öµ */
    where_num %= Length; 
     
    if(flag>0)
@@ -524,7 +498,7 @@ float DeathZoom(float input, float center, float death)
 
 /**
   * @brief    average_init
-  * @note    »¬¶¯ÂË²¨Æ÷³õÊ¼»¯£¬ÉèÖÃ³¤¶È
+  * @note    ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã³ï¿½ï¿½ï¿½
   * @param  None
   * @retval None
   * @author  RobotPilots
@@ -550,7 +524,7 @@ void average_init(moving_Average_Filter *Aver, uint8_t lenth)
 
 /**
   * @brief    average_clear
-  * @note    »¬¶¯ÂË²¨Æ÷Çå¿Õ
+  * @note    ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   * @param  None
   * @retval None
   * @author  RobotPilots
@@ -569,7 +543,7 @@ void average_clear(moving_Average_Filter *Aver)
 
 /**
   * @brief    average_add
-  * @note    »¬¶¯Æ½¾ùÂË²¨Æ÷½øÈë¶ÓÁÐ£¬ÏÈ½øÏÈ³ö
+  * @note    ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½È½ï¿½ï¿½È³ï¿½
   * @param  None
   * @retval None
   * @author  RobotPilots
@@ -595,8 +569,8 @@ void average_add(moving_Average_Filter *Aver, float add_data)
 /**
   * @brief    LPF_Init
   * @note    LOW_PASS_FILTER Initialize
-  * @param  	LPF µÍÍ¨ÂË²¨Æ÷µÄÖ¸Õë
-							threshold	µÍÍ¨ÂË²¨Æ÷µÄãÐÖµ
+  * @param  	LPF ï¿½ï¿½Í¨ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+							threshold	ï¿½ï¿½Í¨ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
   * @retval 	none
   * @author  RobotPilots
   */
@@ -612,8 +586,8 @@ void LPF_Init(LOW_Pass_Filter *LPF, float threshold)
 /**
   * @brief    LPF_Init
   * @note    LOW_PASS_FILTER Initialize
-  * @param  	LPF µÍÍ¨ÂË²¨Æ÷µÄÖ¸Õë
-							input_data ½øÈëµÍÍ¨ÂË²¨µÄÊý¾Ý
+  * @param  	LPF ï¿½ï¿½Í¨ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
+							input_data ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
   * @retval 	none
   * @author  RobotPilots
   */
@@ -621,10 +595,10 @@ void LPF_Init(LOW_Pass_Filter *LPF, float threshold)
 float LPF_add(LOW_Pass_Filter *LPF, float input_data)
 {
 	float err_temp;
-	//ÅÐ¶Ï²»Õý³£µÄÇé¿ö
+	//ï¿½Ð¶Ï²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	if((abs(LPF->last))>LPF->threshold || (abs(LPF->now))>LPF->threshold)
 	{
-		if(abs(input_data)<LPF->threshold)//Èç¹ûÊäÈëÐ¡ÓÚãÐÖµ£¬Í¨¹ý
+		if(abs(input_data)<LPF->threshold)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½Í¨ï¿½ï¿½
 		{
 			LPF->now = input_data;
 			LPF->last = LPF->now;
@@ -642,17 +616,17 @@ float LPF_add(LOW_Pass_Filter *LPF, float input_data)
 		}
 	}
 	
-	//ÅÐ¶ÏÕý³£µÄÇé¿ö
+	//ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	err_temp = abs(input_data-LPF->now);
-	if(err_temp<LPF->threshold)//Ð¡ÓÚãÐÖµ
+	if(err_temp<LPF->threshold)//Ð¡ï¿½ï¿½ï¿½ï¿½Öµ
 	{
 		LPF->last = LPF->now;
 		LPF->now = input_data;
 		LPF->High_flag = 0;
 	}
-	else	//´óÓÚãÐÖµ
+	else	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
 	{
-		//²»×ö´¦Àí
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		LPF->High_flag = 1;
 	}
 	

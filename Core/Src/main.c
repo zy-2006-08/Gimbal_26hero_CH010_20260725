@@ -1698,7 +1698,7 @@ Vision_process_t Vision_process;
 extKalman_t Gimbal_Pitch, Gimbal_Yaw, vision_angleY_KF, vision_speedY_KF, vision_absolute_Yaw_Kal, vision_distance_KF;
 LOW_Pass_Filter vision_speedY_LPF;
 moving_Average_Filter vision_angleY_MF, vision_speedY_MF, vision_distance_MF;
-Anti_top_Data TOP_Data;
+Anti_top_Data TOP_Data = {.cnt_max = 300};  // cnt_max 默认值 300(原为结构体内 C++ 默认初始化,去C++化后移此处)
 Kf kalman_speedYaw1, kalman_accel1, kalman_distend1;
 /* USER CODE END PM */
 

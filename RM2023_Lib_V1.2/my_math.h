@@ -8,7 +8,9 @@
 #include "stdint.h"
 #include "math.h"
 	 
-//#define LIMIT(x,min,max) ((x)<(min)?(min):((x)>(max)?(max):(x)))
+#ifndef LIMIT
+#define LIMIT(x,min,max) ((x)<(min)?(min):((x)>(max)?(max):(x)))
+#endif
 #define RP_MAX(x, y) 					((x)>(y)?(x):(y))
 #define RP_MIN(x, y) 					((x)>(y)?(y):(x))
 #define MAF_MaxSize  100
@@ -108,7 +110,7 @@ typedef struct Anti_top_Data
 	int8_t flag1;
 	uint8_t Anti_top_flag;
 	uint32_t cnt;
-	uint32_t cnt_max = 300;
+	uint32_t cnt_max;   // 纯C兼容:不在结构体内默认初始化;默认值 300 在实例定义处(main.c TOP_Data)显式赋值
 	float binary_err;
 }Anti_top_Data;
 
