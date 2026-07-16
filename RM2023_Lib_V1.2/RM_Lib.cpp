@@ -46,6 +46,102 @@ bool IsCrc16Good(const unsigned char* pData, uint16_t nLength)
     return crc_itu16_verify(pData, nLength);
 }
 
+/************************************ 通用缓变/斜坡工具 **************************************************/
+// 从 main.c 下沉的通用增量缓变/缓出斜坡函数(纯算法,逐字搬家,逻辑与原实现完全一致)。声明见 RM_Lib.h。
+
+// int16缓变函数:通过增量缓慢改变数值,避免突变
+void I16_slow(int16_t *in, int16_t target, float add_inc, float cut_inc, int16_t stop_err, float *inc_buf)
+{
+  if (abs(*in - target) < stop_err) // 到达目标
+  {
+    *in = target;
+  }
+  else
+  {
+    if (*in < target)
+    {
+      *inc_buf += add_inc;
+    }
+    else
+    {
+      *inc_buf -= cut_inc;
+    }
+
+    if (abs(*inc_buf) >= 1) // 增量大于1才改变数值
+    {
+      int int_inc;
+      int_inc = (int)*inc_buf;
+      *in += int_inc;
+      *inc_buf -= int_inc;
+    }
+  }
+}
+
+// 整型缓变函数:用于缓慢改变数值
+void I_slow(int *in, int target, float add_inc, float cut_inc, int stop_err, float *inc_buf)
+{
+  if (abs(*in - target) < stop_err) // 到达目标
+  {
+    *in = target;
+  }
+  else
+  {
+    if (*in < target)
+    {
+      *inc_buf += add_inc;
+    }
+    else
+    {
+      *inc_buf -= cut_inc;
+    }
+
+    if (abs(*inc_buf) >= 1) // 增量大于1才改变数值
+    {
+      int int_inc;
+      int_inc = (int)*inc_buf;
+      *in += int_inc;
+      *inc_buf -= int_inc;
+    }
+  }
+}
+
+// 缓出型缓变函数:离目标远时快速匀速逼近,接近目标时按比例减速平滑到位
+// max_step: 远端最大步长(饱和速度)  min_step: 最小步长(保证最终能走到位)
+// k: 减速比例系数(step = 剩余距离 * k)  stop_err: 到达阈值
+void I_slow_ease(int *in, int target, float max_step, float min_step, float k, int stop_err, float *inc_buf)
+{
+  int remaining = target - *in;
+  if (abs(remaining) <= stop_err) // 到达目标
+  {
+    *in = target;
+    *inc_buf = 0; // 清空缓冲，避免残留量影响下次调用
+    return;
+  }
+
+  // 按剩余距离成比例给步长：越近越慢
+  float step = (float)remaining * k;
+
+  // 限幅：远端饱和到 max_step，近端保底 min_step，保证最终收敛
+  float mag = fabsf(step);
+  if (mag > max_step)
+    mag = max_step;
+  else if (mag < min_step)
+    mag = min_step;
+  step = (remaining > 0) ? mag : -mag;
+
+  // 沿用增量累积机制，支持亚整数步长推进
+  *inc_buf += step;
+  if (fabsf(*inc_buf) >= 1)
+  {
+    int int_inc = (int)*inc_buf;
+    // 防止越过目标：本次推进不得超过剩余距离
+    if (abs(int_inc) > abs(remaining))
+      int_inc = remaining;
+    *in += int_inc;
+    *inc_buf -= int_inc;
+  }
+}
+
 /**************************************** C A N **********************************************************/
 void USER_CAN::Init(uint16_t t, uint16_t x)
 {

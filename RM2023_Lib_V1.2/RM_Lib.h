@@ -34,6 +34,12 @@ extern uint8_t info_ubuf[USART_BUF_SIZE];
 extern uint16_t GetCrc16(const unsigned char *pData, uint16_t nLength); // 计算给定长度数据的16位CRC。
 extern bool IsCrc16Good(const unsigned char *pData, uint16_t nLength);  // 检查给定长度数据的16位CRC是否正确。
 
+/************************************ 通用缓变/斜坡工具 **************************************************/
+// 从 main.c 下沉的通用增量缓变/缓出斜坡函数(纯算法,任何车/任何轴可复用),逐字搬家,逻辑不变。
+extern void I16_slow(int16_t *in, int16_t target, float add_inc, float cut_inc, int16_t stop_err, float *inc_buf); // int16增量缓变
+extern void I_slow(int *in, int target, float add_inc, float cut_inc, int stop_err, float *inc_buf);               // int增量缓变
+extern void I_slow_ease(int *in, int target, float max_step, float min_step, float k, int stop_err, float *inc_buf); // 缓出型斜坡
+
 /**************************************** C A N **********************************************************/
 class USER_CAN
 {
