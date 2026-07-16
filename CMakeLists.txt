@@ -44,11 +44,10 @@ add_executable(${CMAKE_PROJECT_NAME})
 add_subdirectory(cmake/stm32cubemx)
 
 # Force C files containing C++ code to compile as C++ (do not rename these files)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/Core/Src/stm32f4xx_it.c PROPERTIES LANGUAGE CXX)
+# (main.c 与 stm32f4xx_it.c 均已薄壳化为纯 C,不再强制 C++ 编译)
 
 # Relax C++ strictness ONLY for the C-code-compiled-as-C++ files (preserves Keil-lenient behavior; no codegen change)
 set_source_files_properties(
-    ${CMAKE_SOURCE_DIR}/Core/Src/stm32f4xx_it.c
     ${CMAKE_SOURCE_DIR}/Core/Src/my_main.cpp
     PROPERTIES COMPILE_OPTIONS "-fpermissive"
 )

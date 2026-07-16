@@ -10,12 +10,20 @@
  * 二者实体在 my_main.cpp(C++),通过 extern "C" 暴露给纯 C 的 main.c 调用。
  */
 
+#include "main.h"   /* DMA_HandleTypeDef 等 HAL 类型 */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void My_Setup(void);
 void My_Loop(void);
+
+/* ===== 从 stm32f4xx_it.c 抽离的中断业务逻辑(实体在 my_main.cpp,供纯 C 的中断入口调用) ===== */
+void VD_2rx(DMA_HandleTypeDef *hdma);   /* USART3 图传接收(原 stm32f4xx_it.c PM 区) */
+void TX_VD_Deal(void);                  /* 图传转发处理 */
+void IT_UART5_YK_Handle(void);          /* UART5: YK.DT16_RxCplt_IRQHandler 段 */
+void IT_USART6_YK_Handle(void);         /* USART6: YK.VT13_* 段 */
 
 #ifdef __cplusplus
 }

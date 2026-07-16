@@ -2107,3 +2107,108 @@ extern "C" void My_Loop(void)
     YT_Tx_static_Flag = XTL_flag ? (YT_Tx_static_Flag | 0x0002) : (YT_Tx_static_Flag & (uint16_t)~2);
     YT_Tx_static_Flag = SP_Turn_Flag ? (YT_Tx_static_Flag | SP_TURN_FLAG) : (YT_Tx_static_Flag & ~SP_TURN_FLAG);
 }
+
+
+/* ===== 从 stm32f4xx_it.c 抽离:USART3 图传接收 PM 区(逐字迁入) ===== */
+volatile uint8_t VD_rxcnt = 0;
+volatile uint8_t VD_tx_state = 0;
+volatile uint8_t u6_tx_cnt = 0;
+volatile uint8_t rxcnt_sum = 0;
+
+// rxcnt_sum-VD_rxcnt
+uint8_t VD_2rx_buf[2][VD_RX_NUM] = {0};
+uint8_t VD_FIFO = 0;
+uint16_t VD_rx_byte = 0;
+#define VD_DATA_NUM 300
+uint8_t NSQD_De_video_buffer[VD_DATA_NUM];
+uint8_t TX_VD_buf[FRAME_HEADER_LENGTH + CMD_ID_LENGTH + VD_DATA_NUM + FRAME_TAIL_LENGTH];
+volatile uint8_t VD_rx_state = 0;
+volatile uint8_t DMATX = 0;
+void VD_2rx(DMA_HandleTypeDef *hdma)
+{
+  uint32_t temp;
+  uint32_t temp_ndtr;
+  if ((__HAL_UART_GET_FLAG(&MINI_PC_USART_HANDLE, UART_FLAG_IDLE) != RESET))
+  {
+    __HAL_UART_CLEAR_IDLEFLAG(&MINI_PC_USART_HANDLE);
+    temp = MINI_PC_USART_HANDLE.Instance->SR;
+    temp = MINI_PC_USART_HANDLE.Instance->DR;
+    HAL_UART_DMAStop(&MINI_PC_USART_HANDLE);
+    temp_ndtr = hdma->Instance->NDTR;
+    VD_rx_byte = VD_RX_NUM - temp_ndtr;
+    VD_FIFO = !VD_FIFO;
+    HAL_UART_Receive_DMA(&MINI_PC_USART_HANDLE, (uint8_t *)VD_2rx_buf[VD_FIFO], sizeof(VD_2rx_buf[0]));
+
+    rxcnt_sum++;
+    if (VD_2rx_buf[!VD_FIFO][0] == 'V' && VD_2rx_buf[!VD_FIFO][1] == 'D' && VD_rx_byte == VD_DATA_NUM + 4)
+    {
+      memcpy(NSQD_De_video_buffer, VD_2rx_buf[!VD_FIFO] + 4, VD_DATA_NUM);
+      TC.Data_Concatenation(NSQD_De_video_buffer, TX_VD_buf, VD_DATA_NUM, 0x310);
+      DMATX = HAL_UART_Transmit_DMA(&huart6, TX_VD_buf, FRAME_HEADER_LENGTH + CMD_ID_LENGTH + VD_DATA_NUM + FRAME_TAIL_LENGTH);
+      //   for (uint8_t i = 0; i < sizeof(NSQD_De_video_buffer); i++) {
+      //     NSQD_De_video_buffer[i] = VD_2rx_buf[!VD_FIFO][i + 4];
+      //   }
+
+      VD_2rx_buf[!VD_FIFO][0] = 0;
+      VD_2rx_buf[!VD_FIFO][1] = 0;
+      VD_rxcnt++;
+
+      //   if (!video_send_ready) // 上一次发送已完成
+      //   {
+      //     memcpy(video_buffer, (void *)vision_data.video, 300); // 复制300字节视频数据
+      //     video_send_ready = 1;                                 // 启动发送标志
+      //     video_send_index = 0;                                 // 从第0包开始
+      //   }
+      VD_rx_state = 1;
+    }
+    /*deal*/
+  }
+}
+
+void TX_VD_Deal(void)
+{
+  //   if (VD_rx_state && !VD_tx_state) {
+  //     TC.Data_Concatenation(NSQD_De_video_buffer, TX_VD_buf, VD_DATA_NUM, 0x310);
+  //     HAL_UART_Transmit_DMA(&huart6, TX_VD_buf, FRAME_HEADER_LENGTH + CMD_ID_LENGTH + VD_DATA_NUM + FRAME_TAIL_LENGTH);
+  //     VD_rx_state = 0;
+  //     VD_tx_state = 1;
+  //   }
+
+  if (VD_rx_state)
+  {
+
+    VD_rx_state = 0;
+    VD_tx_state = 1;
+  }
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart == &huart6)
+  {
+    u6_tx_cnt++;
+    VD_tx_state = 0;
+  }
+}
+
+
+/* ===== 从 stm32f4xx_it.c 抽离:遥控器 YK 中断处理(YK 定义见上方 PTD 区) ===== */
+extern "C" void IT_UART5_YK_Handle(void)
+{
+  YK.DT16_RxCplt_IRQHandler();
+}
+
+extern "C" void IT_USART6_YK_Handle(void)
+{
+    if (YK.VT13_RxCplt_IRQHandler())
+    {
+            YK.rx_cnt++;
+        YK.VT13_YK_deal();
+        YK.VT13_self_ctrl_deal();
+        YK.VT13_UART_Receive_enable();
+    }
+    else
+    {
+        YK.vt_yk_cnt++;
+    }
+}

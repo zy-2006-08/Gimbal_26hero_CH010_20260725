@@ -22,7 +22,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "RM_Lib.h"
+#include "my_main.h"
 #include "communication.h"
 #include "string.h"
 #include "hipnuc_dec.h"
@@ -31,11 +31,9 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-// extern DBUS YK;
-extern RC YK;
+// YK(RC 类对象)的中断用法已抽离至 my_main.cpp,此处不再需要 RM_Lib.h / extern RC YK。
 extern float imu_cnt;
 extern uint32_t counter;
-// extern RC YK;
 
 // extern Kf kalman_speedYaw1, kalman_accel1, kalman_distend1;
 
@@ -50,87 +48,7 @@ uint8_t uart4_recbuf[32];
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-volatile uint8_t VD_rxcnt = 0;
-volatile uint8_t VD_tx_state = 0;
-volatile uint8_t u6_tx_cnt = 0;
-volatile uint8_t rxcnt_sum = 0;
-
-// rxcnt_sum-VD_rxcnt
-uint8_t VD_2rx_buf[2][VD_RX_NUM] = {0};
-uint8_t VD_FIFO = 0;
-uint16_t VD_rx_byte = 0;
-#define VD_DATA_NUM 300
-uint8_t NSQD_De_video_buffer[VD_DATA_NUM];
-uint8_t TX_VD_buf[FRAME_HEADER_LENGTH + CMD_ID_LENGTH + VD_DATA_NUM + FRAME_TAIL_LENGTH];
-volatile uint8_t VD_rx_state = 0;
-extern TuChuan TC;
-volatile uint8_t DMATX = 0;
-void VD_2rx(DMA_HandleTypeDef *hdma)
-{
-  uint32_t temp;
-  uint32_t temp_ndtr;
-  if ((__HAL_UART_GET_FLAG(&MINI_PC_USART_HANDLE, UART_FLAG_IDLE) != RESET))
-  {
-    __HAL_UART_CLEAR_IDLEFLAG(&MINI_PC_USART_HANDLE);
-    temp = MINI_PC_USART_HANDLE.Instance->SR;
-    temp = MINI_PC_USART_HANDLE.Instance->DR;
-    HAL_UART_DMAStop(&MINI_PC_USART_HANDLE);
-    temp_ndtr = hdma->Instance->NDTR;
-    VD_rx_byte = VD_RX_NUM - temp_ndtr;
-    VD_FIFO = !VD_FIFO;
-    HAL_UART_Receive_DMA(&MINI_PC_USART_HANDLE, (uint8_t *)VD_2rx_buf[VD_FIFO], sizeof(VD_2rx_buf[0]));
-
-    rxcnt_sum++;
-    if (VD_2rx_buf[!VD_FIFO][0] == 'V' && VD_2rx_buf[!VD_FIFO][1] == 'D' && VD_rx_byte == VD_DATA_NUM + 4)
-    {
-      memcpy(NSQD_De_video_buffer, VD_2rx_buf[!VD_FIFO] + 4, VD_DATA_NUM);
-      TC.Data_Concatenation(NSQD_De_video_buffer, TX_VD_buf, VD_DATA_NUM, 0x310);
-      DMATX = HAL_UART_Transmit_DMA(&huart6, TX_VD_buf, FRAME_HEADER_LENGTH + CMD_ID_LENGTH + VD_DATA_NUM + FRAME_TAIL_LENGTH);
-      //   for (uint8_t i = 0; i < sizeof(NSQD_De_video_buffer); i++) {
-      //     NSQD_De_video_buffer[i] = VD_2rx_buf[!VD_FIFO][i + 4];
-      //   }
-
-      VD_2rx_buf[!VD_FIFO][0] = 0;
-      VD_2rx_buf[!VD_FIFO][1] = 0;
-      VD_rxcnt++;
-
-      //   if (!video_send_ready) // 上一次发送已完成
-      //   {
-      //     memcpy(video_buffer, (void *)vision_data.video, 300); // 复制300字节视频数据
-      //     video_send_ready = 1;                                 // 启动发送标志
-      //     video_send_index = 0;                                 // 从第0包开始
-      //   }
-      VD_rx_state = 1;
-    }
-    /*deal*/
-  }
-}
-
-void TX_VD_Deal(void)
-{
-  //   if (VD_rx_state && !VD_tx_state) {
-  //     TC.Data_Concatenation(NSQD_De_video_buffer, TX_VD_buf, VD_DATA_NUM, 0x310);
-  //     HAL_UART_Transmit_DMA(&huart6, TX_VD_buf, FRAME_HEADER_LENGTH + CMD_ID_LENGTH + VD_DATA_NUM + FRAME_TAIL_LENGTH);
-  //     VD_rx_state = 0;
-  //     VD_tx_state = 1;
-  //   }
-
-  if (VD_rx_state)
-  {
-
-    VD_rx_state = 0;
-    VD_tx_state = 1;
-  }
-}
-
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-  if (huart == &huart6)
-  {
-    u6_tx_cnt++;
-    VD_tx_state = 0;
-  }
-}
+// 图传接收/转发(VD_2rx/TX_VD_Deal/HAL_UART_TxCpltCallback)已抽离至 my_main.cpp;此处经 my_main.h 声明调用。
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -613,7 +531,7 @@ void UART5_IRQHandler(void)
 {
   /* USER CODE BEGIN UART5_IRQn 0 */
   // YK.DBUS_RxCplt_IRQHandler();
-  YK.DT16_RxCplt_IRQHandler();
+  IT_UART5_YK_Handle();   // 原 YK.DT16_RxCplt_IRQHandler(),已抽离至 my_main.cpp
   /* USER CODE END UART5_IRQn 0 */
   HAL_UART_IRQHandler(&huart5);
   /* USER CODE BEGIN UART5_IRQn 1 */
@@ -700,17 +618,7 @@ void USART6_IRQHandler(void)
   // YK.DBUS_RxCplt_IRQHandler();
   // YK.DT16_RxCplt_IRQHandler();
 
-    if (YK.VT13_RxCplt_IRQHandler())
-    {
-            YK.rx_cnt++;
-        YK.VT13_YK_deal();
-        YK.VT13_self_ctrl_deal();
-        YK.VT13_UART_Receive_enable();
-    }
-    else
-    {
-        YK.vt_yk_cnt++;
-    }
+    IT_USART6_YK_Handle();   // 原 YK.VT13_* 段,已抽离至 my_main.cpp
 
   /* USER CODE END USART6_IRQn 0 */
   HAL_UART_IRQHandler(&huart6);
