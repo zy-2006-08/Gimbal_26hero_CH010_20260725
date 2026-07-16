@@ -44,13 +44,12 @@ add_executable(${CMAKE_PROJECT_NAME})
 add_subdirectory(cmake/stm32cubemx)
 
 # Force C files containing C++ code to compile as C++ (do not rename these files)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/Core/Src/main.c ${CMAKE_SOURCE_DIR}/Core/Src/stm32f4xx_it.c ${CMAKE_SOURCE_DIR}/RM2023_Lib_V1.2/my_math.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/Core/Src/main.c ${CMAKE_SOURCE_DIR}/Core/Src/stm32f4xx_it.c PROPERTIES LANGUAGE CXX)
 
 # Relax C++ strictness ONLY for the C-code-compiled-as-C++ files (preserves Keil-lenient behavior; no codegen change)
 set_source_files_properties(
     ${CMAKE_SOURCE_DIR}/Core/Src/main.c
     ${CMAKE_SOURCE_DIR}/Core/Src/stm32f4xx_it.c
-    ${CMAKE_SOURCE_DIR}/RM2023_Lib_V1.2/my_math.c
     PROPERTIES COMPILE_OPTIONS "-fpermissive"
 )
 
@@ -64,7 +63,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     RM2023_Lib_V1.2/RM_Lib.cpp
     RM2023_Lib_V1.2/rgb_debug.cpp
-    RM2023_Lib_V1.2/my_math.c
     RM2023_Lib_V1.2/CP_System.c
     RM2023_Lib_V1.2/communication.c
     RM2023_Lib_V1.2/crc.c
