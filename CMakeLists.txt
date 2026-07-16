@@ -66,6 +66,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     RM2023_Lib_V1.2/CP_System.c
     RM2023_Lib_V1.2/communication.c
     RM2023_Lib_V1.2/crc.c
+    Core/Src/my_main.cpp
     Core/Src/example_data.c
     Core/Src/nmea_dec.c
     Core/Src/hipnuc_dec.c
