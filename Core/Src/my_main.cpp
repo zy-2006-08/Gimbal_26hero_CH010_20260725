@@ -24,7 +24,6 @@
 #include "CP_System.h"
 #include "rgb_debug.h"
 #include "stm32f4xx_it.h"
-#include "gimbal_zhou.h"
 extern Yaw_Continuous_t yaw_cont;
 extern float Yaw_Continuous_Update(float raw_yaw);
 extern void Yaw_Continuous_Reset(void);
@@ -104,6 +103,14 @@ PID_class PID_Yaw_mang(12, 0, 0, 500, 100, 0, 500, 50, 0), //7, 0, 0, 500, 100, 
           PID_Yaw_sp_zm(7, 0, 0, 400, 0, 0, 500, 0,0),               // 7, 0, 0, 400, 0, 0, 500, 0,0                                                          
           PID_YAW_Erro_IMU_MANG(12, 0.12, 0, 500, 100, 0, 500, 0.06,50), //13, 0.07, 200, 500, 100, 0, 500, 0.1,50
           PID_YAW_Erro_IMU_GYRO(4, 0, 0, 400, 0, 0, 500, 0,0); // 9, 0, 0, 400, 0, 0, 500, 0,0
+
+// 云台单轴 GYRO 双环 PID(Gimbal_Zhou):配置一行到位,与 MOTOR_RM 风格一致。
+//   YAW  : 内环带LP(true),外环反馈 continuous_yaw,内环反馈 gyr[2],输出 -1
+//   PITCH: 内环不带LP(false),外环反馈 hi91.pitch,内环反馈 gyr[0],输出 -1(重力补偿保持关闭)
+Gimbal_Zhou Yaw_calc(&PID_Yaw_mang, &PID_Yaw_sp, &PID_Yaw_mang_zm, &PID_Yaw_sp_zm,
+                     &yaw_cont.continuous_yaw, &hipnuc_raw.hi91.gyr[2], -1.0f, true);
+Gimbal_Zhou Pitch_calc(&PID_LK_Pitch_Mang, &PID_LK_Pitch_SP, &PID_LK_Pitch_Mang_zm, &PID_LK_Pitch_SP_zm,
+                       &hipnuc_raw.hi91.pitch, &hipnuc_raw.hi91.gyr[0], -1.0f, false);
 					
 /*pitch鎷х揣鍙傛暟*/		
 //PID_class PID_LK_Pitch_Mang(18, 0, 0, 240, 1, 1, 240, 250, 50), //18, 0, 0, 240, 1, 1, 240, 250, 50
@@ -841,34 +848,14 @@ void YAW_Logic(void)
 }
 void YAW_PID_Calc(void)
 {
-  static float kk_yaw_mang_lp = 1;
-  static float kk_yaw_sp_lp = 1; 
   static UpDown_check_class UD_TURN_Y(0),UD_SET_Y(0);
   if (yaw_control_mode == GYRO_MODE)
   {
     Yaw_goal -= ((float)YK.yaogan.ch2 / Yaw_YK_GYRO_Speed + (float)LIMIT(YK.shubiao.x, -1000, 1000) / Yaw_Mouse_Speed);
-
-    // GYRO 双环 PID 改由 Gimbal_Zhou 计算(与原内联逐行等价):内环带 LP,反馈 gyr[2],输出 -OUT_PID。
-    // 目标处理(上方 Yaw_goal -= ...)保留在应用层。MANG/PROTECT 分支不变。
-    static Gimbal_Zhou yaw_zhou;
-    static bool yaw_zhou_init = false;
-    if (!yaw_zhou_init)
-    {
-      yaw_zhou.pid_wai    = &PID_Yaw_mang;
-      yaw_zhou.pid_nei    = &PID_Yaw_sp;
-      yaw_zhou.pid_wai_zm = &PID_Yaw_mang_zm;
-      yaw_zhou.pid_nei_zm = &PID_Yaw_sp_zm;
-      yaw_zhou.fankui_wai_angle = &yaw_cont.continuous_yaw;
-      yaw_zhou.fankui_gyro      = &hipnuc_raw.hi91.gyr[2];
-      yaw_zhou.output_sign = -1.0f;
-      yaw_zhou.nei_use_lp  = true;
-      yaw_zhou_init = true;
-    }
-    yaw_zhou.lp_wai = kk_yaw_mang_lp;
-    yaw_zhou.lp_nei = kk_yaw_sp_lp;
-    yaw_zhou.goal   = Yaw_goal;
-    yaw_zhou.gyro_update(request.zimiao_status);
-    YAW_PID_OUT = yaw_zhou.output;
+    // GYRO 双环 PID 交给 Gimbal_Zhou(配置见全局 Yaw_calc 定义)。目标处理留应用层。
+    Yaw_calc.goal = Yaw_goal;
+    Yaw_calc.gyro_update(request.zimiao_status);
+    YAW_PID_OUT = Yaw_calc.output;
   }
   else if (yaw_control_mode == MANG_MODE)
   {
@@ -984,31 +971,11 @@ void PITCH_PID_Calc(void)
     Pitch_goal -= (float)YK.yaogan.ch3 / Pitch_YK_Speed + ((float)LIMIT(YK.shubiao.y, -500, 500) / Pitch_Mouse_Speed);
     Pitch_goal = LIMIT(Pitch_goal, -44, 16);
     gravity_compensation = PITCH_Gravity_Compensation(hipnuc_raw.hi91.pitch);
-
-    if (request.zimiao_status)  // 鑷瀯锟?锟?
-    {
-      PID_LK_Pitch_Mang.Integral = 0;
-      PID_LK_Pitch_Mang.OUT_I = 0;
-      PID_LK_Pitch_SP.Integral = 0;
-      PID_LK_Pitch_SP.OUT_I = 0;
-
-      PID_LK_Pitch_Mang_zm.PID_update_LP(Pitch_goal, hipnuc_raw.hi91.pitch, kk_pitch_mang_lp);
-      PID_LK_Pitch_SP_zm.PID_update(PID_LK_Pitch_Mang_zm.OUT_PID, hipnuc_raw.hi91.gyr[0]);
-      // PITCH_PID_OUT = PID_LK_Pitch_SP_zm.OUT_PID + gravity_compensation;
-      PITCH_PID_OUT = -PID_LK_Pitch_SP_zm.OUT_PID;      
-    }
-    else  // 鑷瀯鍏抽棴
-    {
-      PID_LK_Pitch_Mang_zm.Integral = 0;
-      PID_LK_Pitch_Mang_zm.OUT_I = 0;
-      PID_LK_Pitch_SP_zm.Integral = 0;
-      PID_LK_Pitch_SP_zm.OUT_I = 0;
-
-      PID_LK_Pitch_Mang.PID_update_LP(Pitch_goal, hipnuc_raw.hi91.pitch, kk_pitch_mang_lp);
-      PID_LK_Pitch_SP.PID_update(PID_LK_Pitch_Mang.OUT_PID, hipnuc_raw.hi91.gyr[0]);
-      // PITCH_PID_OUT = PID_LK_Pitch_SP.OUT_PID + gravity_compensation;
-      PITCH_PID_OUT = -PID_LK_Pitch_SP.OUT_PID;
-    }
+    // GYRO 双环 PID 交给 Gimbal_Zhou(配置见全局 Pitch_calc 定义)。目标处理与重力补偿计算留应用层。
+    Pitch_calc.lp_wai = kk_pitch_mang_lp;   // 外环 LP 系数(调参用,现值1)
+    Pitch_calc.goal   = Pitch_goal;
+    Pitch_calc.gyro_update(request.zimiao_status);
+    PITCH_PID_OUT = Pitch_calc.output;
   }
   else if (pitch_control_mode == MANG_MODE)
   {

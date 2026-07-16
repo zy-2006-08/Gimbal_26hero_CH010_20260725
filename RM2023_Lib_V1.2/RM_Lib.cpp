@@ -11,7 +11,6 @@
 #include "stdarg.h"
 #include "string.h"
 #include "crc.h"
-#include "gimbal_zhou.h"
 /**************************************** USART **********************************************************/
 uint8_t info_ubuf[USART_BUF_SIZE];
 // uint8_t INFO_DMA(const char *fmt, ...)

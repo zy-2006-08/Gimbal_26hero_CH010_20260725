@@ -517,6 +517,33 @@ class PID_Fuzzy_class
   void fuzzy(float goal, float now);
 };
 
+// Gimbal_Zhou - 云台单轴 GYRO 模式双环 PID 公版类
+// 外环(角度) -> 内环(角速度) -> 输出符号;支持自瞄/非自瞄双组 PID 切换(切换时清对方组积分)。
+// 仅覆盖 GYRO 模式;MANG/PROTECT 分支留应用层。两轴差异全部由构造参数体现。
+// 逻辑与原 YAW_PID_Calc / PITCH_PID_Calc 的 GYRO 分支逐行等价。
+class Gimbal_Zhou
+{
+  public:
+    PID_class *pid_wai, *pid_nei;        // 常规组 外环/内环
+    PID_class *pid_wai_zm, *pid_nei_zm;  // 自瞄组 外环/内环
+    float *fankui_wai_angle;             // 外环角度反馈 (YAW=continuous_yaw, PITCH=hi91.pitch)
+    float *fankui_gyro;                  // 内环角速度反馈 (YAW=gyr[2], PITCH=gyr[0])
+    float output_sign;                   // 输出符号(两轴现状均 -1)
+    bool  nei_use_lp;                    // 内环是否用 PID_update_LP(YAW=true) 或 PID_update(PITCH=false)
+    float lp_wai, lp_nei;                // 外环/内环 LP 系数(现状均 1)
+    float goal, output;                  // 目标(应用层每帧写) / 结果(应用层读)
+
+    Gimbal_Zhou(PID_class *wai, PID_class *nei, PID_class *wai_zm, PID_class *nei_zm,
+                float *fk_angle, float *fk_gyro, float sign, bool use_lp,
+                float lpw = 1.0f, float lpn = 1.0f)
+        : pid_wai(wai), pid_nei(nei), pid_wai_zm(wai_zm), pid_nei_zm(nei_zm),
+          fankui_wai_angle(fk_angle), fankui_gyro(fk_gyro),
+          output_sign(sign), nei_use_lp(use_lp), lp_wai(lpw), lp_nei(lpn),
+          goal(0.0f), output(0.0f) {}
+
+    void gyro_update(bool zimiao);  // 一帧 GYRO 计算,实现在 RM_Lib.cpp
+};
+
 // CRC16_class(DJI-CRC16)为死代码:全工程零引用,构造函数从未定义,从未实例化,已删除。
 // DJI-CRC16 统一实现见 crc.c 的 crc_dji16()。
 
