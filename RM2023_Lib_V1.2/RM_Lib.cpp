@@ -11,6 +11,7 @@
 #include "stdarg.h"
 #include "string.h"
 #include "crc.h"
+#include "gimbal_zhou.h"
 /**************************************** USART **********************************************************/
 uint8_t info_ubuf[USART_BUF_SIZE];
 // uint8_t INFO_DMA(const char *fmt, ...)
@@ -140,6 +141,45 @@ void I_slow_ease(int *in, int target, float max_step, float min_step, float k, i
     *in += int_inc;
     *inc_buf -= int_inc;
   }
+}
+
+/************************************ Gimbal_Zhou (云台单轴 GYRO 双环) *********************************/
+// 与原 YAW_PID_Calc / PITCH_PID_Calc 的 GYRO 分支逐行等价:
+//   自瞄 -> 先清常规组积分,外环(角度)->内环(角速度)->符号
+//   非自瞄 -> 先清 zm 组积分,同结构
+// 内环按 nei_use_lp 选 PID_update_LP(带LP) 或 PID_update(不带LP)。
+void Gimbal_Zhou::gyro_update(bool zimiao)
+{
+    if (zimiao)  // 自瞄
+    {
+        // 清常规组积分(与原内联一致)
+        pid_wai->Integral = 0;
+        pid_wai->OUT_I = 0;
+        pid_nei->Integral = 0;
+        pid_nei->OUT_I = 0;
+
+        pid_wai_zm->PID_update_LP(goal, *fankui_wai_angle, lp_wai);
+        if (nei_use_lp)
+            pid_nei_zm->PID_update_LP(pid_wai_zm->OUT_PID, *fankui_gyro, lp_nei);
+        else
+            pid_nei_zm->PID_update(pid_wai_zm->OUT_PID, *fankui_gyro);
+        output = output_sign * pid_nei_zm->OUT_PID;
+    }
+    else         // 自瞄关闭
+    {
+        // 清 zm 组积分(与原内联一致)
+        pid_wai_zm->Integral = 0;
+        pid_wai_zm->OUT_I = 0;
+        pid_nei_zm->Integral = 0;
+        pid_nei_zm->OUT_I = 0;
+
+        pid_wai->PID_update_LP(goal, *fankui_wai_angle, lp_wai);
+        if (nei_use_lp)
+            pid_nei->PID_update_LP(pid_wai->OUT_PID, *fankui_gyro, lp_nei);
+        else
+            pid_nei->PID_update(pid_wai->OUT_PID, *fankui_gyro);
+        output = output_sign * pid_nei->OUT_PID;
+    }
 }
 
 /**************************************** C A N **********************************************************/
