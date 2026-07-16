@@ -24,6 +24,7 @@
 #include "CP_System.h"
 #include "rgb_debug.h"
 #include "stm32f4xx_it.h"
+#include "gimbal_zhou.h"
 extern Yaw_Continuous_t yaw_cont;
 extern float Yaw_Continuous_Update(float raw_yaw);
 extern void Yaw_Continuous_Reset(void);
@@ -847,28 +848,27 @@ void YAW_PID_Calc(void)
   {
     Yaw_goal -= ((float)YK.yaogan.ch2 / Yaw_YK_GYRO_Speed + (float)LIMIT(YK.shubiao.x, -1000, 1000) / Yaw_Mouse_Speed);
 
-    if (request.zimiao_status)  // 鑷瀯锟?锟?
+    // GYRO 双环 PID 改由 Gimbal_Zhou 计算(与原内联逐行等价):内环带 LP,反馈 gyr[2],输出 -OUT_PID。
+    // 目标处理(上方 Yaw_goal -= ...)保留在应用层。MANG/PROTECT 分支不变。
+    static Gimbal_Zhou yaw_zhou;
+    static bool yaw_zhou_init = false;
+    if (!yaw_zhou_init)
     {
-      PID_Yaw_mang.Integral = 0;
-      PID_Yaw_mang.OUT_I = 0;
-      PID_Yaw_sp.Integral = 0;
-      PID_Yaw_sp.OUT_I = 0;
-
-      PID_Yaw_mang_zm.PID_update_LP(Yaw_goal, yaw_cont.continuous_yaw, kk_yaw_mang_lp);
-      PID_Yaw_sp_zm.PID_update_LP(PID_Yaw_mang_zm.OUT_PID, hipnuc_raw.hi91.gyr[2], kk_yaw_sp_lp);
-      YAW_PID_OUT = -PID_Yaw_sp_zm.OUT_PID;
+      yaw_zhou.pid_wai    = &PID_Yaw_mang;
+      yaw_zhou.pid_nei    = &PID_Yaw_sp;
+      yaw_zhou.pid_wai_zm = &PID_Yaw_mang_zm;
+      yaw_zhou.pid_nei_zm = &PID_Yaw_sp_zm;
+      yaw_zhou.fankui_wai_angle = &yaw_cont.continuous_yaw;
+      yaw_zhou.fankui_gyro      = &hipnuc_raw.hi91.gyr[2];
+      yaw_zhou.output_sign = -1.0f;
+      yaw_zhou.nei_use_lp  = true;
+      yaw_zhou_init = true;
     }
-    else  // 鑷瀯鍏抽棴
-    {
-      PID_Yaw_mang_zm.Integral = 0;
-      PID_Yaw_mang_zm.OUT_I = 0;
-      PID_Yaw_sp_zm.Integral = 0;
-      PID_Yaw_sp_zm.OUT_I = 0;
-
-      PID_Yaw_mang.PID_update_LP(Yaw_goal, yaw_cont.continuous_yaw, kk_yaw_mang_lp);
-      PID_Yaw_sp.PID_update_LP(PID_Yaw_mang.OUT_PID, hipnuc_raw.hi91.gyr[2], kk_yaw_sp_lp);
-      YAW_PID_OUT = -PID_Yaw_sp.OUT_PID;
-    }
+    yaw_zhou.lp_wai = kk_yaw_mang_lp;
+    yaw_zhou.lp_nei = kk_yaw_sp_lp;
+    yaw_zhou.goal   = Yaw_goal;
+    yaw_zhou.gyro_update(request.zimiao_status);
+    YAW_PID_OUT = yaw_zhou.output;
   }
   else if (yaw_control_mode == MANG_MODE)
   {
