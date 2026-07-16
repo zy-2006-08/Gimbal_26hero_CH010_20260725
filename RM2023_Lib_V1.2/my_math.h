@@ -16,24 +16,24 @@
 	 
 	 typedef struct 
 {
-    float LastP;//ÉÏ´Î¹ÀËãÐ­·½²î ³õÊ¼»¯ÖµÎª0.02
-    float Now_P;//µ±Ç°¹ÀËãÐ­·½²î ³õÊ¼»¯ÖµÎª0
-    float out;//¿¨¶ûÂüÂË²¨Æ÷Êä³ö ³õÊ¼»¯ÖµÎª0
-    float Kg;//¿¨¶ûÂüÔöÒæ ³õÊ¼»¯ÖµÎª0
-    float Q;//¹ý³ÌÔëÉùÐ­·½²î ³õÊ¼»¯ÖµÎª0.005
-    float R;//¹Û²âÔëÉùÐ­·½²î ³õÊ¼»¯ÖµÎª0.543
+    float LastP;//ï¿½Ï´Î¹ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0.02
+    float Now_P;//ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0
+    float out;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0
+    float Kg;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0
+    float Q;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0.005
+    float R;//ï¿½Û²ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ê¼ï¿½ï¿½ÖµÎª0.543
 }KFP;//Kalman Filter parameter
 
 
 typedef struct {
-    float X_last; //ÉÏÒ»Ê±¿ÌµÄ×îÓÅ½á¹û  X(k-|k-1)
-    float X_mid;  //µ±Ç°Ê±¿ÌµÄÔ¤²â½á¹û  X(k|k-1)
-    float X_now;  //µ±Ç°Ê±¿ÌµÄ×îÓÅ½á¹û  X(k|k)
-    float P_mid;  //µ±Ç°Ê±¿ÌÔ¤²â½á¹ûµÄÐ­·½²î  P(k|k-1)
-    float P_now;  //µ±Ç°Ê±¿Ì×îÓÅ½á¹ûµÄÐ­·½²î  P(k|k)
-    float P_last; //ÉÏÒ»Ê±¿Ì×îÓÅ½á¹ûµÄÐ­·½²î  P(k-1|k-1)
-    float kg;     //kalmanÔöÒæ
-    float A;      //ÏµÍ³²ÎÊý
+    float X_last; //ï¿½ï¿½Ò»Ê±ï¿½Ìµï¿½ï¿½ï¿½ï¿½Å½ï¿½ï¿½  X(k-|k-1)
+    float X_mid;  //ï¿½ï¿½Ç°Ê±ï¿½Ìµï¿½Ô¤ï¿½ï¿½ï¿½ï¿½  X(k|k-1)
+    float X_now;  //ï¿½ï¿½Ç°Ê±ï¿½Ìµï¿½ï¿½ï¿½ï¿½Å½ï¿½ï¿½  X(k|k)
+    float P_mid;  //ï¿½ï¿½Ç°Ê±ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½  P(k|k-1)
+    float P_now;  //ï¿½ï¿½Ç°Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Å½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½  P(k|k)
+    float P_last; //ï¿½ï¿½Ò»Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Å½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½  P(k-1|k-1)
+    float kg;     //kalmanï¿½ï¿½ï¿½ï¿½
+    float A;      //ÏµÍ³ï¿½ï¿½ï¿½ï¿½
     float B;
     float Q;
     float R;
@@ -42,24 +42,25 @@ typedef struct {
 }extKalman_t;
 
 /***************/
-/*Êý¾Ý½á¹¹*/
+/*ï¿½ï¿½ï¿½Ý½á¹¹*/
 
 typedef struct
 {
     uint16_t nowLength;
     uint16_t queueLength;
     float queueTotal;
-    //³¤¶È
+    //ï¿½ï¿½ï¿½ï¿½
     float queue[100];
-    //Ö¸Õë
-    float aver_num;//Æ½¾ùÖµ
+    //Ö¸ï¿½ï¿½
+    float aver_num;//Æ½ï¿½ï¿½Öµ
 
-    float Diff;//²î·ÖÖµ
+    float Diff;//ï¿½ï¿½ï¿½Öµ
 
     uint8_t full_flag;
 } QueueObj;
 
 
+#ifdef __cplusplus
 class Kf{
 
 private:
@@ -69,6 +70,7 @@ public:
 	double KalmanFilter(const double ResrcData,double ProcessNiose_Q,double MeasureNoise_R,uint8_t kind);
 
 };
+#endif
 
 typedef struct {
     QueueObj speed_queue;
@@ -90,9 +92,9 @@ typedef struct {
 	  float distend_get;
 	  uint8_t eeror;
 	  float predict_anti_top_angle_limit;
-	  uint32_t 		rx_time_prev;		// ½ÓÊÕÊý¾ÝµÄÇ°Ò»Ê±¿Ì
-    uint32_t 		rx_time_now;		// ½ÓÊÕÊý¾ÝµÄµ±Ç°Ê±¿Ì
-    uint16_t 		rx_time_fps;		// Ö¡ÂÊ
+	  uint32_t 		rx_time_prev;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½Ç°Ò»Ê±ï¿½ï¿½
+    uint32_t 		rx_time_now;		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄµï¿½Ç°Ê±ï¿½ï¿½
+    uint16_t 		rx_time_fps;		// Ö¡ï¿½ï¿½
 } Vision_process_t;
 
 typedef struct Anti_top_Data
@@ -114,10 +116,10 @@ typedef struct moving_Average_Filter
 {
 	float num[100];
 	uint8_t lenth;
-	uint8_t pot;//µ±Ç°Î»ÖÃ
+	uint8_t pot;//ï¿½ï¿½Ç°Î»ï¿½ï¿½
 	float total;
 	float aver_num;
-}moving_Average_Filter;	//×î´óÉèÖÃMAF_MaxSize¸ö
+}moving_Average_Filter;	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½MAF_MaxSizeï¿½ï¿½
 
 typedef struct LOW_Pass_Filter
 {
@@ -125,7 +127,7 @@ typedef struct LOW_Pass_Filter
 	float now;
 	float threshold;
 	float output;
-	uint8_t High_flag;//¼ÓÁËÒ»¸öÌø±äÊ±Ö¸Ê¾µÄflag
+	uint8_t High_flag;//ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±Ö¸Ê¾ï¿½ï¿½flag
 }LOW_Pass_Filter;
 
 extern Vision_process_t Vision_process;
