@@ -50,6 +50,7 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/Core/Src/main.c ${CMAKE_SOURCE_D
 set_source_files_properties(
     ${CMAKE_SOURCE_DIR}/Core/Src/main.c
     ${CMAKE_SOURCE_DIR}/Core/Src/stm32f4xx_it.c
+    ${CMAKE_SOURCE_DIR}/Core/Src/my_main.cpp
     PROPERTIES COMPILE_OPTIONS "-fpermissive"
 )
 
