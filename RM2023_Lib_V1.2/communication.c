@@ -1,6 +1,5 @@
 #include "communication.h"
 #include "my_math.h" 
-#include "RM_Lib.h" 
 #include "crc.h"
 uint8_t Mini_PC_info_ubuf[MINI_PC_BUF_SIZE];
 uint8_t Mini_PC_tx_buf[128];
