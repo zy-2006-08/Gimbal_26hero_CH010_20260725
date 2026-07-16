@@ -8,6 +8,7 @@
 #include "main.h"
 #include "string.h"
 #include <stdint.h>
+#include <stdbool.h>
 #include "my_math.h"
 
 #define MINI_PC_BUF_SIZE 		  128		// 数组大小，可修改
@@ -147,7 +148,7 @@ extern float shoot_sp;
 // 标准的云台到视觉通讯数据包
 struct __attribute__((packed)) GimbalToVision
 {
-  uint8_t head[2] = {'S', 'P'};  // 帧头 "SP"
+  uint8_t head[2];               // 帧头 "SP"(纯C兼容:不在结构体内默认初始化;该结构体全工程零实例化)
   uint8_t mode;                   // 0:空闲, 1:自瞄, 2:小符, 3:大符
   float q[4];                     // 四元数 wxyz顺序
   float bullet_speed;             // 弹速
