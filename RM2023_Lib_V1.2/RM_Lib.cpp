@@ -2123,10 +2123,12 @@ void RC::DT16_watchdog_run(void)
         this->DT16_Init();
     }
 }
+volatile uint32_t vt13_wdg_cnt = 0; // 诊断:VT13遥控看门狗超时触发次数(每次会Abort共享的huart6=图传口)
 void RC::VT13_watchdog_run(void)
 {
     this->VT13_time_100ms++;
     if (this->VT13_time_100ms > 7) {
+        vt13_wdg_cnt++;
         vt13yk_signal_flag = 0;
         this->VT13_YK_set_zero();
         this->VT13_feed_watchdog();

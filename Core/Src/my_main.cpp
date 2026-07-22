@@ -65,7 +65,8 @@ uint8_t MYmode = PROTECT_MODE;
 
 /********   电机   **********/
 USER_CAN CAN_1(&hcan1, 0), CAN_2(&hcan2, 1);
-MOTOR_RM  BoPan(0x201, &CAN_2),Mini_Pitch_2006(0x202, &CAN_2);
+MOTOR_RM  BoPan(0x201, &CAN_2);
+MOTOR_RM  Mini_Pitch_2006(0x207, &CAN_1); // 已从CAN2迁移到CAN1，电调ID设为7(0x207)，缓解CAN2总线饱和导致的云台0x280指令帧被饿死
 int16_t Mini_Pitch_output = 0; // Mini_Pitch电机电流输出（供遥测使用，文件作用域）
 
 MOTOR_RM  Motor_MCL_UP_up(0x202, &CAN_1), 
@@ -89,9 +90,9 @@ PID_class PID_MCL_UP_sp(MCL_KP, 0, 0, 16000, 0, 0, 16000, 0,0), // 上轮速度P
           PID_MCL_RR_sp(MCL_KP, 0, 0, 16000, 0, 0, 19000, 0, 0),   // 右后�? sp+
           PID_MCL_UPUP_sp(MCL_KP, 0, 0, 16000, 0, 0, 19000, 0, 0), // 涓婅疆 sp-20
           PID_MCL_LL_sp(MCL_KP, 0, 0, 16000, 0, 0, 19000, 0, 0);   // 宸﹀悗锟? sp-
-
-PID_class PID_LK_Pitch_Mang(14, 0, 0, 240, 1, 1, 240, 250, 50), //18, 0, 0, 240, 1, 1, 240, 250, 50
-          PID_LK_Pitch_SP(6, 0, 0, 600, 0, 0, 600, 0, 0), //8, 0, 0, 600, 0, 0, 600, 0, 0
+    
+PID_class PID_LK_Pitch_Mang(12, 0, 0, 240, 1, 1, 240, 250, 50), //18, 0, 0, 240, 1, 1, 240, 250, 50
+          PID_LK_Pitch_SP(5, 0, 0, 600, 0, 0, 600, 0, 0), //8, 0, 0, 600, 0, 0, 600, 0, 0
           PID_LK_Pitch_Mang_zm(13, 0.03, 0, 240, 100, 1, 240, 0.12, 50), //13, 0.03, 0, 240, 100, 1, 240, 0.12, 50
           PID_LK_Pitch_SP_zm(8, 0, 0, 600, 0, 0, 600, 0, 0), //8, 0, 0, 600, 0, 0, 600, 0, 0
           PID_LK_Erro_Pitch_IMU_MANG(14, 0.15, 0, 240, 500, 1, 240, 0.1, 50), //25, 0.15, 0, 240, 500, 1, 240, 0.1, 50
@@ -102,7 +103,7 @@ PID_class PID_Yaw_mang(12, 0, 0, 500, 100, 0, 500, 50, 0), //7, 0, 0, 500, 100, 
           PID_Yaw_mang_zm(13.5, 0.05, 0, 500, 100, 0, 500, 0.12, 50), //13.5, 0.05, 0, 500, 100, 0, 500, 0.12, 50
           PID_Yaw_sp_zm(7, 0, 0, 400, 0, 0, 500, 0,0),               // 7, 0, 0, 400, 0, 0, 500, 0,0                                                          
           PID_YAW_Erro_IMU_MANG(12, 0.12, 0, 500, 100, 0, 500, 0.06,50), //13, 0.07, 200, 500, 100, 0, 500, 0.1,50
-          PID_YAW_Erro_IMU_GYRO(4, 0, 0, 400, 0, 0, 500, 0,0); // 9, 0, 0, 400, 0, 0, 500, 0,0
+          PID_YAW_Erro_IMU_GYRO(5, 0, 0, 400, 0, 0, 500, 0,0); // 9, 0, 0, 400, 0, 0, 500, 0,0
 
 // 云台单轴双环 PID(Gimbal_Zhou):配置一行到位,风格同 MOTOR_RM。
 //   参数序: GYRO常规组(外,内) GYRO自瞄组(外,内) MANG组(外,内) 外环角度反馈 内环角速度反馈 符号 GYRO内环是否LP
@@ -170,6 +171,10 @@ LED_Mapping_t led_mappings[5];
 #define CHASSIS_CAP_OK_FLAG   ((uint16_t)0x0001 << 10)  // 超级电容
 #define CHASSIS_REF_OK_FLAG   ((uint16_t)0x0001 << 11)  // 裁判系统
 
+// 底盘保险开关: 1=启用 0=关闭(整段功能不编译, 等同注释掉)
+// 生效时: 部署模式(按R,5250)下若底盘4个电机全部掉线, 待其全部恢复上线自动退出部署 -> 摩擦轮回落 Near(3700)
+#define CHASSIS_SAFE_ENABLE 0
+
 /********  通信标志  **********/
 uint16_t YT_Tx_static_Flag = 0, // 云台发送静态标志位 bool
     DP_Tx_static_Flag = 0;      // 底盘发送静态标志位 bool  0=关闭  1=开启底盘跟随
@@ -207,7 +212,7 @@ float shoot_sp = 11.9;
 int16_t L_targe_sp, R_targe_sp, UP_targe_sp, RR_targe_sp, LL_targe_sp, UPUP_targe_sp;
 uint8_t MCL_Start_flag = 0;
 int16_t MCL_MID;                                                                       // 摩擦轮中�?
-int16_t MCL_MAX_Speed_Near = 5250, MCL_MAX_Speed_Far = 5200, MCL_MAX_Speed_Now = 3700; // 5170鏀逛负3750,3700锛?5200
+int16_t MCL_MAX_Speed_Near = 3700, MCL_MAX_Speed_Far = 5190, MCL_MAX_Speed_Now = 3700; // 5170鏀逛负3750,3700锛?5200
 uint8_t MCL_ON_flag = 0;
 
 // 鎷ㄧ洏
@@ -220,6 +225,7 @@ uint16_t Shoot_time = 0;
 float BP_Islow_incbuf = 0;
 int32_t targe_inc;
 UpDown_check_class UD_BoPan_ON(0), UD_BP_1(0);
+int16_t BP_output = 0;
 
 // Mini_Pitch_2006控制变量
 uint8_t Mini_Pitch_MODE = PROTECT_MODE;
@@ -251,7 +257,6 @@ const int YT_Erro = 44480;
 #define YAW_LEVEL_MANG_2 28600 + 32768
 // 拨盘射击前馈
 #define YAW_SHOOT_FF -400.0f
-
 float YAW_PID_OUT = 0;                   // PID输出，用于发送CAN数据
 float Yaw_goal = 0;
 uint8_t yaw_control_mode = PROTECT_MODE; // 控制模式，单位度
@@ -281,7 +286,7 @@ float Yaw_X;
 #define Pitch_YK_MANG_Speed 8000.0f
 #define PITCH_LEVEL_MANG 50630
 #define MINI_PITCH_BASE_POSITION 32468  // Mini_Pitch基准位置：对应舵机的1800
-#define DIAO_SHE_ENCODER_OFFSET  36700   // 吊射模式目标编码器值（相对堵转零点，可调）
+#define DIAO_SHE_ENCODER_OFFSET  29000   // 吊射模式目标编码器值（相对堵转零点，可调）
 #define DUZHUAN_DIANLIU      (-3000)
 #define DUZHUAN_SUDU_YUZHI   30
 #define DUZHUAN_QUEREN_CISHU 400
@@ -308,6 +313,9 @@ float sin_theta = 0, cos_theta = 0;
 // 展开模式标志�?
 uint8_t deploy_flag = 0; // 0=关闭 1=展开模式 2=展开旋转
 int32_t mini_pitch_deploy_offset = 0;
+
+// 上台阶标志位（来自底盘板 0x012 bit5），用于上台阶模式下让2006电机保持不动
+uint8_t Shangtaijie_flag = 0;
 
 // 小陀螺标�?
 uint8_t SP_Turn_Flag = 0;
@@ -416,7 +424,7 @@ uint8_t MCL_Logic()
   static UpDown_check_class UD_MCL(0), UD_C(0), UD_X(0), UD_TURN(0);
   static uint8_t now_state;
   //根据模式设置摩擦轮�?�度
-  if (MYmode == DIAO_SHE_MODE || deploy_flag)
+  if (MYmode == DIAO_SHE_MODE || deploy_flag || MYmode == SHANG_XIA_MODE)
   {
     MCL_MAX_Speed_Now = MCL_MAX_Speed_Far;  // 5050
   }
@@ -612,6 +620,7 @@ void BP_KD_TIM(void)
 void Mini_Pitch_2006_Logic()
 {
   static UpDown_check_class UD_E(0);
+  static uint8_t shangtaijie_latched = 0;  // 上台阶锁位标志：进入时锁定一次目标
   if (UD_E.updata(YK.Pressed_Check(KEY_PRESSED_E)) == UpDown_check_rising)
     Mini_Pitch_E_key_flag = !Mini_Pitch_E_key_flag;
 
@@ -627,6 +636,21 @@ void Mini_Pitch_2006_Logic()
     }
     return;
   }
+  // 上台阶模式：2006保持不动。进入时锁定当前位置为目标，PID原地保持（防止小pitch掉落），
+  // 目标不随遥杆/键盘变化，实现“电机不动”。退出后清除锁定，恢复正常控制。
+  if (Shangtaijie_flag)
+  {
+    if (!shangtaijie_latched)
+    {
+      Mini_Pitch_targe = Mini_Pitch_2006.mang_inf;  // 进入时锁定当前位置为目标
+      Mini_Pitch_calc_targe = Mini_Pitch_targe;
+      shangtaijie_latched = 1;
+    }
+    Mini_Pitch_MODE = MANG_MODE;  // 保持闭环，原地锁位不移动
+    return;
+  }
+  shangtaijie_latched = 0;  // 非上台阶：清除锁定，下次进入时重新锁位
+
   if (MYmode == DI_PAN_H_MODE)
   {
     Mini_Pitch_MODE = MANG_MODE;
@@ -713,7 +737,8 @@ void Communication_boards(void)
   }
   else if (MCL_protect_cansend_1FF_flag)
   {
-    CAN_1.Send_RM(0x1FF, 0, 0, 0, 0); // 保护6个摩擦轮
+    // 0x1FF组：摩擦轮UPUP/RR保护置0，但2006(0x207)在同组第3字段，需保留其电流避免小pitch掉落
+    CAN_1.Send_RM(0x1FF, 0, 0, Mini_Pitch_output, 0);
     MCL_protect_cansend_1FF_flag = 0;
   }
 }
@@ -798,7 +823,7 @@ uint16_t Telescope_Get_PWM()
   }
   else
   {
-    telescope_ccr = 1350;
+    telescope_ccr = 1300;
     // telescope_ccr = 2000;   
   }
 
@@ -1000,7 +1025,7 @@ void Servo_PWM_Output()
   // uint16_t mini_pitch_ccr = Mini_PITCH_Get_PWM();  // 已禁用：现在使用2006电机
 
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, telescope_ccr);
-  // *in = target;
+  // *in = target;，
 }
 // 键盘特殊功能处理
 void Keyboard_Special_Func()
@@ -1122,7 +1147,30 @@ void Deploy_Timeout_Check(void)
     deploy_out_tim = 0;
   }
 }
-// 澶嶄綅鍑芥暟
+#if CHASSIS_SAFE_ENABLE
+// 底盘保险: 部署模式下若底盘4电机全部掉线, 待其全部恢复后自动退出部署(deploy_flag=0),
+// 摩擦轮经 MCL_Logic 自然回落到 Near(3700)。仅在"全掉->全恢复"上升沿触发一次, 之后需手动再按R。
+void Chassis_Safe_Guard(void)
+{
+  static uint8_t chassis_was_offline = 0;
+  if (!deploy_flag) // 非部署模式: 不监测, 复位状态
+  {
+    chassis_was_offline = 0;
+    return;
+  }
+  uint8_t all_online = Chassis_Motor_M1_OK && Chassis_Motor_M2_OK && Chassis_Motor_M3_OK && Chassis_Motor_M4_OK;
+  if (!all_online)
+  {
+    chassis_was_offline = 1; // 4个电机全部掉线 -> 记住曾下线
+  }
+  else if (chassis_was_offline) // 曾下线 且 现已全部恢复 -> 上升沿
+  {
+    deploy_flag = 0; // 退出部署 -> 摩擦轮回落 Near(3700)
+    chassis_was_offline = 0;
+  }
+}
+#endif
+// 复位
 void Reset(void)
 {
   if (YK.Pressed_Check(KEY_PRESSED_Z) && YK.Pressed_Check(KEY_PRESSED_CTRL)) // 按住z和ctrl键进行软件复�?
@@ -1545,10 +1593,43 @@ void RGB_Debug_Setup(void)
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 8khz
 {
-     if (CAN_1.Receive(CAN_RX_FIFO0) == HAL_OK && MCL_Start_flag) //
-  //    鎺ユ敹鍒癱an1鏁版嵁鍚庤繘琛屽锟?// 锟?鍚悗浼氬鑷存嫧鐩樹笉杞紝鍙兘鏄洜涓烘嫧鐩樼數鏈哄湪杩欓噷鏇存柊浜唒id
-  // if (CAN_1.Receive(CAN_RX_FIFO0) == HAL_OK)
+     if (CAN_1.Receive(CAN_RX_FIFO0) == HAL_OK) // 移除 && MCL_Start_flag：2006(0x207)已迁移到CAN1，需独立于摩擦轮持续控制
   {
+    // ===== Mini_Pitch_2006 (0x207) 反馈处理：独立于摩擦轮，摩擦轮未开时(堵转标定/吊射)也需正常控制 =====
+    if (Mini_Pitch_2006.update() == HAL_OK)
+    {
+      m2006_cnt++;
+      timeout_mini_pitch = 0;  // 清零超时计数
+      Mini_Pitch_2006.NSQD_8192mang_inf();
+
+      if (Mini_Pitch_MODE == MANG_MODE)
+      {
+        PID_Mini_Pitch_2006_mang.PID_update(Mini_Pitch_targe, Mini_Pitch_2006.mang_inf);
+        PID_Mini_Pitch_2006_sp.PID_update(PID_Mini_Pitch_2006_mang.OUT_PID, Mini_Pitch_2006.sp);
+        Mini_Pitch_output = PID_Mini_Pitch_2006_sp.OUT_PID;
+      }
+      else if (Mini_Pitch_MODE == DUZHUAN_MODE)
+      {
+        Mini_Pitch_output = DUZHUAN_DIANLIU;
+        if (Mini_Pitch_2006.sp > -DUZHUAN_SUDU_YUZHI && Mini_Pitch_2006.sp < DUZHUAN_SUDU_YUZHI)
+          Mini_Pitch_duzhuan_cnt++;
+        else
+          Mini_Pitch_duzhuan_cnt = 0;
+      }
+      else
+      {
+        Mini_Pitch_output = 0;
+      }
+
+      // 0x1FF 组统一发送点：由2006反馈(常驻1kHz)驱动，确保2006指令稳定；
+      // 摩擦轮UPUP(0x205)/RR(0x206)电流未就绪时为0，就绪后由下方摩擦轮分支更新其PID输出值
+      CAN_1.Send_RM(0x1FF, MCL_Start_flag ? PID_MCL_UPUP_sp.OUT_PID : 0,
+                           MCL_Start_flag ? PID_MCL_RR_sp.OUT_PID : 0,
+                           Mini_Pitch_output, 0);
+    }
+    // ===== 摩擦轮反馈处理：仅在摩擦轮启动时 =====
+    else if (MCL_Start_flag)
+    {
     if (Motor_MCL_UP_up.update() == HAL_OK) // 1khz
     {
       timeout_mcl_upup = 0;  // 娓呴浂瓒呮椂璁℃暟
@@ -1601,11 +1682,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 8khz
 
    if (MCL_2_motorflag == 0x3)
    {
-       CAN_1.Send_RM(0x1FF, PID_MCL_UPUP_sp.OUT_PID, PID_MCL_RR_sp.OUT_PID, 0, 0);
-//     CAN_1.Send_RM(0x1FF, PID_MCL_UPUP_sp.OUT_PID, 0, 0, 0);
+     // 注意：0x1FF 帧已由上方2006反馈分支统一发送(带摩擦轮UPUP/RR电流)，此处不再重复发送，仅计算摩擦轮均速
      MCL_2_motorflag = 0;
      MCL_MID = (Motor_MCL_L.sp - Motor_MCL_R.sp - Motor_MCL_UP_up.sp + Motor_MCL_LL.sp - Motor_MCL_UP.sp - Motor_MCL_RR.sp) / 6; // 摩擦轮平均转速，用于判断摩擦�?
    }
+    }
   }
 }
 
@@ -1615,7 +1696,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 8khz
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) // 4khz
 {
-  static int16_t BP_output = 0;
   static uint8_t BP_updated = 0;
   static uint8_t Mini_Pitch_updated = 0;
 
@@ -1660,31 +1740,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) // 4khz
         BP_output = PID_BP_sp.OUT_PID;
       }
     }
-    else if(Mini_Pitch_2006.update() == HAL_OK)
-    {
-      m2006_cnt++;
-      timeout_mini_pitch = 0;  // 娓呴浂瓒呮椂璁℃暟
-      Mini_Pitch_2006.NSQD_8192mang_inf();
-
-      if (Mini_Pitch_MODE == MANG_MODE)
-      {
-        PID_Mini_Pitch_2006_mang.PID_update(Mini_Pitch_targe, Mini_Pitch_2006.mang_inf);
-        PID_Mini_Pitch_2006_sp.PID_update(PID_Mini_Pitch_2006_mang.OUT_PID, Mini_Pitch_2006.sp);
-        Mini_Pitch_output = PID_Mini_Pitch_2006_sp.OUT_PID;
-      }
-      else if (Mini_Pitch_MODE == DUZHUAN_MODE)
-      {
-        Mini_Pitch_output = DUZHUAN_DIANLIU;
-        if (Mini_Pitch_2006.sp > -DUZHUAN_SUDU_YUZHI && Mini_Pitch_2006.sp < DUZHUAN_SUDU_YUZHI)
-          Mini_Pitch_duzhuan_cnt++;
-        else
-          Mini_Pitch_duzhuan_cnt = 0;
-      }
-      else
-      {
-        Mini_Pitch_output = 0;
-      }
-    }
+    // 注意：Mini_Pitch_2006 已迁移到 CAN1(0x207)，其反馈处理见 HAL_CAN_RxFifo0MsgPendingCallback
     switch (CAN_2.RxHeader.StdId)
     {
     case (0x012):
@@ -1693,6 +1749,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) // 4khz
       mine_flag = DP_Tx_static_Flag & MINE_FLAG;
       heat_flag = DP_Tx_static_Flag & HEAT_FLAG;
       boost_flag = DP_Tx_static_Flag & BOOST_FLAG;
+      Shangtaijie_flag = (DP_Tx_static_Flag & 0x0020) ? 1 : 0;  // bit5：底盘上台阶模式，用于让2006保持不动
       request.mine = mine_flag;
       Shoot_speed_u.c[0] = CAN_2.rx_buf[3];
       Shoot_speed_u.c[1] = CAN_2.rx_buf[2];
@@ -1734,8 +1791,7 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) // 4khz
       break;
     }
   }
-    CAN_2.Send_RM(0x200, BP_output, Mini_Pitch_output, 0, 0);
-    // CAN_2.Send_RM(0x200, BP_output, 0, 0, 0);    
+// 2006已迁移到CAN1，此处CAN2的0x200组只发拨盘(0x201)
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
@@ -1743,10 +1799,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim == &htim12) // 1khz
   {
     TIM12_Callback();
+    static uint8_t tim_bopan = 0;
+    tim_bopan = !tim_bopan;
+    if (tim_bopan)
+    {
+        CAN_2.Send_RM(0x200, BP_output, 0, 0, 0); 
+    }
   }
   if (htim == &htim9) // 2kHz
   {
     static uint8_t can_scan = 1;
+
     if (can_scan)
     {
       // YAW和PITCH电机PID计算
@@ -1767,6 +1830,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       if (BP_MODE == MANG_MODE)
       {
         if (deploy_flag || MYmode == DIAO_SHE_MODE || MYmode == SHANG_XIA_MODE)
+        // if (deploy_flag || MYmode == DIAO_SHE_MODE)        
         {
           PID_BP_mang.KP = 0.25f;
           I_slow(&BP_targe, BP_calc_targe, 120, 120, 53, &BP_Islow_incbuf);
@@ -1838,7 +1902,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
       TX_VD_Deal();
     }
-
 
     // 更新所有超时计数器
     if (timeout_pitch < 255) timeout_pitch++;
@@ -1965,11 +2028,22 @@ extern "C" void My_Setup(void)
   Mini_PC_UART_Init();
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_SET); // 使能电机驱动
 //	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_9, GPIO_PIN_SET);
+
+  __HAL_UART_ENABLE_IT(&MINI_PC_USART_HANDLE, UART_IT_IDLE);
+  extern DMA_HandleTypeDef hdma_usart3_rx;
+  __HAL_DMA_DISABLE_IT(&hdma_usart3_rx, DMA_IT_HT); // 鍙€夛細绂佺敤鍗婁紶杈撲腑鏂?
+  HAL_UART_Receive_DMA(&MINI_PC_USART_HANDLE, (uint8_t *)VD_2rx_buf[0], sizeof(VD_2rx_buf[0]));
+
   HAL_Delay(1500);
   Mini_Pitch_MODE = DUZHUAN_MODE;
 	IMU_UART_Init();
 }
-
+/* ===== 从 stm32f4xx_it.c 抽离:USART3 图传接收 PM 区(逐字迁入) ===== */
+volatile uint8_t VD_rxcnt = 0;
+volatile uint8_t VD_tx_state = 0;
+volatile uint8_t u6_tx_cnt = 0;
+volatile uint8_t rxcnt_sum = 0;
+volatile uint32_t tx_drop_cnt = 0; // 满载丢包检测:上一帧未发完就来新帧(发送被中断饿死)则+1
 extern "C" void My_Loop(void)
 {
 /*閬ユ帶鍣ㄦ暟鎹?*/
@@ -1991,7 +2065,7 @@ extern "C" void My_Loop(void)
 //		 INFO("%.2f,%.2f,%.2f\r\n",Pitch_088.Anglespeed.Deal_yaw, Pitch_088.Anglespeed.Deal_roll,Pitch_088.realAngle.pitch);
 //				 INFO("%.2f,%.2f,%.2f,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%02X,%d\r\n",response.pitch.f, response.yaw.f,response.distance.f,a,b,c,d,e,f,g,h,o,p,counter);
 /*yaw鍐呭鐜洰鏍囧疄闄?*/    
-   INFO("%.2f,%.2f\r\n", Yaw_goal, yaw_cont.continuous_yaw);
+  //  INFO("%.2f,%.2f\r\n", Yaw_goal, yaw_cont.continuous_yaw);
 //     INFO("%.2f,%.2f\r\n",PID_Yaw_mang.OUT_PID, hipnuc_raw.hi91.gyr[2]);   
     // INFO("%.2f,%.2f\r\n",PID_YAW_Erro_IMU_MANG.OUT_PID, hipnuc_raw.hi91.gyr[2]);
     // INFO("%.2f,%.2f\r\n",PID_Yaw_mang_zm.OUT_PID, hipnuc_raw.hi91.gyr[2]);hipnuc_raw.hi91.pitch
@@ -2010,7 +2084,7 @@ extern "C" void My_Loop(void)
 /*CH010闄€铻轰华鍥涘厓鏁?*/    
 		// INFO("%.2f,%.2f,%.2f,%.2f\r\n", hipnuc_raw.hi91.quat[0],hipnuc_raw.hi91.quat[1],hipnuc_raw.hi91.quat[2],hipnuc_raw.hi91.quat[3]);
 /*CH010陀螺仪角速度*/
-    // INFO("%.2f\r\n",hipnuc_raw.hi91.gyr[0]);
+    // INFO("%.2f,%.2f,%.2f\r\n",hipnuc_raw.hi91.gyr[0],hipnuc_raw.hi91.gyr[1],hipnuc_raw.hi91.gyr[2]);
 /*榧犳爣鏁版嵁*/
     // INFO("%d,%d\r\n", YK.shubiao.x, YK.shubiao.y);
 /*热量标志*/
@@ -2024,11 +2098,16 @@ extern "C" void My_Loop(void)
     // INFO("%d\r\n", mine_flag);
 //    INFO("%.2f,%.2f\r\n", hipnuc_raw.hi91.pitch, yaw_cont.continuous_yaw);
 //    INFO("ok\r\n");
-    // INFO("%d\r\n", duoji);
+    // INFO("%d\r\n", VD_rxcnt);
     HAL_Delay(10);
 
     // 模式应用�?
     MYMODE_while_application_layer();
+
+#if CHASSIS_SAFE_ENABLE
+    // 底盘保险: 部署时底盘全掉线后恢复 -> 自动退出部署降速
+    Chassis_Safe_Guard();
+#endif
 
     // �?启摩擦轮逻辑，返回摩擦轮是否启动标志
     uint8_t mcl_on = MCL_Logic();
@@ -2061,14 +2140,11 @@ extern "C" void My_Loop(void)
     YT_Tx_static_Flag = (bool)deploy_flag ? (YT_Tx_static_Flag | 0x0001) : (YT_Tx_static_Flag & (uint16_t)~1);
     YT_Tx_static_Flag = XTL_flag ? (YT_Tx_static_Flag | 0x0002) : (YT_Tx_static_Flag & (uint16_t)~2);
     YT_Tx_static_Flag = SP_Turn_Flag ? (YT_Tx_static_Flag | SP_TURN_FLAG) : (YT_Tx_static_Flag & ~SP_TURN_FLAG);
+    YT_Tx_static_Flag = request.zimiao_status ? (YT_Tx_static_Flag | 0x0080) : (YT_Tx_static_Flag & (uint16_t)~0x0080);  // bit7：自瞄开关状态，传给底盘 UI 的 ZM 指示
 }
 
 
-/* ===== 从 stm32f4xx_it.c 抽离:USART3 图传接收 PM 区(逐字迁入) ===== */
-volatile uint8_t VD_rxcnt = 0;
-volatile uint8_t VD_tx_state = 0;
-volatile uint8_t u6_tx_cnt = 0;
-volatile uint8_t rxcnt_sum = 0;
+
 
 // rxcnt_sum-VD_rxcnt
 uint8_t VD_2rx_buf[2][VD_RX_NUM] = {0};
@@ -2097,12 +2173,15 @@ void VD_2rx(DMA_HandleTypeDef *hdma)
     rxcnt_sum++;
     if (VD_2rx_buf[!VD_FIFO][0] == 'V' && VD_2rx_buf[!VD_FIFO][1] == 'D' && VD_rx_byte == VD_DATA_NUM + 4)
     {
+      // 丢包检测:若 huart6 仍在发上一帧(gState!=READY),说明发送被高优先级中断饿死、
+      // 跟不上接收节奏,本帧会覆写正在发送的缓冲导致坏帧。仅计数,不改变原有行为。
+      if (huart6.gState != HAL_UART_STATE_READY)
+      {
+        tx_drop_cnt++;
+      }
       memcpy(NSQD_De_video_buffer, VD_2rx_buf[!VD_FIFO] + 4, VD_DATA_NUM);
       TC.Data_Concatenation(NSQD_De_video_buffer, TX_VD_buf, VD_DATA_NUM, 0x310);
-      DMATX = HAL_UART_Transmit_DMA(&huart6, TX_VD_buf, FRAME_HEADER_LENGTH + CMD_ID_LENGTH + VD_DATA_NUM + FRAME_TAIL_LENGTH);
-      //   for (uint8_t i = 0; i < sizeof(NSQD_De_video_buffer); i++) {
-      //     NSQD_De_video_buffer[i] = VD_2rx_buf[!VD_FIFO][i + 4];
-      //   }
+      DMATX = HAL_UART_Transmit_IT(&huart6, TX_VD_buf, FRAME_HEADER_LENGTH + CMD_ID_LENGTH + VD_DATA_NUM + FRAME_TAIL_LENGTH);
 
       VD_2rx_buf[!VD_FIFO][0] = 0;
       VD_2rx_buf[!VD_FIFO][1] = 0;
