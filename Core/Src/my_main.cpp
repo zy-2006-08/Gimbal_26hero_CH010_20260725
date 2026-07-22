@@ -576,8 +576,8 @@ void BP_Logic(uint8_t MCL_ON_flag)
     int32_t BP_inc = BoPan.mang_inf % int_shot;
     int bp_err_test = BP_calc_targe - BoPan.mang_inf;
 
-    if (Shoot_flag && (abs(bp_err_test) < 2500) && (heat_flag || YK.Pressed_Check(KEY_PRESSED_CTRL)))
-  // if (Shoot_flag && (abs(bp_err_test) < 2500))
+    // if (Shoot_flag && (abs(bp_err_test) < 2500) && (heat_flag || YK.Pressed_Check(KEY_PRESSED_CTRL)))
+  if (Shoot_flag && (abs(bp_err_test) < 2500))
     {
       targe_inc = (BP_inc < -20000) ? -((int_shot + BP_inc) + int_shot) : -(int_shot + BP_inc);
       BP_calc_targe = BoPan.mang_inf + targe_inc;
@@ -1803,6 +1803,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     tim_bopan = !tim_bopan;
     if (tim_bopan)
     {
+              bp_cnt++;
         CAN_2.Send_RM(0x200, BP_output, 0, 0, 0); 
     }
   }
@@ -2044,6 +2045,7 @@ volatile uint8_t VD_tx_state = 0;
 volatile uint8_t u6_tx_cnt = 0;
 volatile uint8_t rxcnt_sum = 0;
 volatile uint32_t tx_drop_cnt = 0; // 满载丢包检测:上一帧未发完就来新帧(发送被中断饿死)则+1
+volatile uint16_t ct_data_len = 0; // 辅助吊射 CT 帧第2、3字节的长度字段(小端),仅供调试/上报,不参与拒帧
 extern "C" void My_Loop(void)
 {
 /*閬ユ帶鍣ㄦ暟鎹?*/
@@ -2099,6 +2101,8 @@ extern "C" void My_Loop(void)
 //    INFO("%.2f,%.2f\r\n", hipnuc_raw.hi91.pitch, yaw_cont.continuous_yaw);
 //    INFO("ok\r\n");
     // INFO("%d\r\n", VD_rxcnt);
+/*辅助吊射 CT 帧: 长度字段(第2、3字节) + pitch/yaw/distance*/
+    // INFO("len=%d,p=%.2f,y=%.2f,d=%.2f\r\n", ct_data_len, vision_pitch, vision_yaw, vision_distance);
     HAL_Delay(10);
 
     // 模式应用�?
@@ -2143,14 +2147,12 @@ extern "C" void My_Loop(void)
     YT_Tx_static_Flag = request.zimiao_status ? (YT_Tx_static_Flag | 0x0080) : (YT_Tx_static_Flag & (uint16_t)~0x0080);  // bit7：自瞄开关状态，传给底盘 UI 的 ZM 指示
 }
 
-
-
-
 // rxcnt_sum-VD_rxcnt
 uint8_t VD_2rx_buf[2][VD_RX_NUM] = {0};
 uint8_t VD_FIFO = 0;
 uint16_t VD_rx_byte = 0;
 #define VD_DATA_NUM 300
+#define CT_HEADER_LEN 16
 uint8_t NSQD_De_video_buffer[VD_DATA_NUM];
 uint8_t TX_VD_buf[FRAME_HEADER_LENGTH + CMD_ID_LENGTH + VD_DATA_NUM + FRAME_TAIL_LENGTH];
 volatile uint8_t VD_rx_state = 0;
@@ -2171,7 +2173,26 @@ void VD_2rx(DMA_HandleTypeDef *hdma)
     HAL_UART_Receive_DMA(&MINI_PC_USART_HANDLE, (uint8_t *)VD_2rx_buf[VD_FIFO], sizeof(VD_2rx_buf[0]));
 
     rxcnt_sum++;
-    if (VD_2rx_buf[!VD_FIFO][0] == 'V' && VD_2rx_buf[!VD_FIFO][1] == 'D' && VD_rx_byte == VD_DATA_NUM + 4)
+    // 发送端分两个独立的包发出(中间有空闲间隔,各触发一次 IDLE):
+    //   CT 头包   = 16 字节  (C,T + len2 + pitch4 + yaw4 + distance4)
+    //   VD 视频包 = 304 字节 (V,D + 2字节子头 + 300字节视频)
+    uint8_t *ct_buf = VD_2rx_buf[!VD_FIFO];
+
+    // CT 头包: 只解析辅助吊射数据 (小端 float32)
+    if (ct_buf[0] == 'C' && ct_buf[1] == 'T' && VD_rx_byte == CT_HEADER_LEN)
+    {
+      // 读取第 2、3 字节的长度字段 (小端),仅供调试/上报,不参与拒帧
+      ct_data_len = (uint16_t)(ct_buf[2] | (ct_buf[3] << 8));
+
+      memcpy(&vision_pitch,    (const void *)(ct_buf + 4),  4);
+      memcpy(&vision_yaw,      (const void *)(ct_buf + 8),  4);
+      memcpy(&vision_distance, (const void *)(ct_buf + 12), 4);
+
+      ct_buf[0] = 0;
+      ct_buf[1] = 0;
+    }
+    // VD 视频包: 只转发视频 (视频负载在偏移 4 处,原有逻辑不变)
+    else if (ct_buf[0] == 'V' && ct_buf[1] == 'D' && VD_rx_byte == VD_DATA_NUM + 4)
     {
       // 丢包检测:若 huart6 仍在发上一帧(gState!=READY),说明发送被高优先级中断饿死、
       // 跟不上接收节奏,本帧会覆写正在发送的缓冲导致坏帧。仅计数,不改变原有行为。
