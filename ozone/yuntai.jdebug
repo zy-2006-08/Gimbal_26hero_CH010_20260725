@@ -22,8 +22,8 @@ void OnProjectLoad (void) {
   //
   // Dialog-generated settings
   //
-  Project.AddPathSubstitute ("D:/Newcode/Gimbal_24hero_CH010_20260111/ozone", "$(ProjectDir)");
-  Project.AddPathSubstitute ("d:/newcode/gimbal_24hero_ch010_20260111/ozone", "$(ProjectDir)");
+  Project.AddPathSubstitute ("D:/Newcode/Gimbal_26hero_CH010_20260725/ozone", "$(ProjectDir)");
+  Project.AddPathSubstitute ("d:/newcode/gimbal_26hero_ch010_20260725/ozone", "$(ProjectDir)");
   Project.SetDevice ("STM32F405RG");
   Project.SetHostIF ("USB", "");
   Project.SetTargetIF ("SWD");
@@ -32,7 +32,7 @@ void OnProjectLoad (void) {
   //
   // User settings
   //
-  File.Open ("D:/Newcode/Gimbal_24hero_CH010_20260111/build/Debug/Gimbal_Demo.elf");
+  File.Open ("$(ProjectDir)/../build/Debug/Gimbal_Demo.elf");
 }
 
 /*********************************************************************
@@ -309,16 +309,20 @@ void AfterTargetDownload (void) {
 **********************************************************************
 */
 void AfterProjectLoad (void) {
-  Window.Add ("Data Sampling", "Pitch_goal");
-  Window.Add ("Data Sampling", "hipnuc_raw.hi91.pitch");
-  Window.Add ("Data Sampling", "Yaw_goal");
-  Window.Add ("Data Sampling", "hipnuc_raw.hi91.yaw");
-  Window.Add ("Data Sampling", "Motor_MCL_UP_up.sp");
-  Window.Add ("Data Sampling", "Motor_MCL_UP.sp");
-  Window.Add ("Data Sampling", "Motor_MCL_R.sp");
-  Window.Add ("Data Sampling", "-Motor_MCL_L.sp");
-  Window.Add ("Data Sampling", "Motor_MCL_RR.sp");
-  Window.Add ("Data Sampling", "-Motor_MCL_LL.sp");
+  //
+  // 不再自动按固定顺序添加云台变量到 Data Sampling。
+  // 如需恢复自动添加，取消下面的注释即可。
+  //
+  //Window.Add ("Data Sampling", "Pitch_goal");
+  //Window.Add ("Data Sampling", "hipnuc_raw.hi91.pitch");
+  //Window.Add ("Data Sampling", "Yaw_goal");
+  //Window.Add ("Data Sampling", "hipnuc_raw.hi91.yaw");
+  //Window.Add ("Data Sampling", "Motor_MCL_UP_up.sp");
+  //Window.Add ("Data Sampling", "Motor_MCL_UP.sp");
+  //Window.Add ("Data Sampling", "Motor_MCL_R.sp");
+  //Window.Add ("Data Sampling", "-Motor_MCL_L.sp");
+  //Window.Add ("Data Sampling", "Motor_MCL_RR.sp");
+  //Window.Add ("Data Sampling", "-Motor_MCL_LL.sp");
 }
 
 /*********************************************************************

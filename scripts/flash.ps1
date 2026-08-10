@@ -25,8 +25,15 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $projectRoot
 
 # --- Detect J-Link (VID_1366) --------------------------------------------
-$jlink = Get-PnpDevice -ErrorAction SilentlyContinue |
-    Where-Object { $_.InstanceId -match "VID_1366" -and $_.Status -eq "OK" } |
+# Use -PresentOnly so only a PHYSICALLY-CONNECTED J-Link counts. Without it,
+# Windows also lists "ghost" devices for J-Links that were unplugged, so after
+# swapping J-Link out for a DAP the script would still see the ghost J-Link and
+# wrongly take the J-Link path (JLink.exe then fails: cannot connect to probe).
+# Do NOT filter by Status: J-Link composite child nodes flip OK/Unknown by timing.
+# NOTE: keep this script pure ASCII. PowerShell 5.1 reads .ps1 as system ANSI
+# (GBK on zh-CN); UTF-8 CJK comments corrupt into a stray quote and break parsing.
+$jlink = Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue |
+    Where-Object { $_.InstanceId -match "VID_1366" } |
     Select-Object -First 1
 
 if ($jlink) {

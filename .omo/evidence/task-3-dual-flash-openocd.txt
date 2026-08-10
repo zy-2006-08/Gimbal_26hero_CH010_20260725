@@ -1,0 +1,1 @@
+﻿JSON OK; flash.command=powershell -ExecutionPolicy Bypass -File ${workspaceFolder}/scripts/flash.ps1; labels=build, flash, build and flash

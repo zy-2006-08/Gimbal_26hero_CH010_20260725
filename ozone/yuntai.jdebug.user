@@ -1,38 +1,22 @@
 
 
-
 GraphedExpression="Pitch_goal", Color=#e56a6f, Show=0
-GraphedExpression="hipnuc_raw.hi91.pitch", Color=#35792b, Show=0
-GraphedExpression="Yaw_goal", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#769dda, Show=0
-GraphedExpression="hipnuc_raw.hi91.yaw", Color=#b14f0d, Show=0
-GraphedExpression="Motor_MCL_UP_up.sp", Color=#b3c38e, Show=0
-GraphedExpression="Motor_MCL_UP.sp", Color=#ab7b05, Show=0
-GraphedExpression="Motor_MCL_R.sp", Color=#7fd3b7, Show=0
-GraphedExpression="Motor_MCL_RR.sp", Color=#50328f, Show=0
-GraphedExpression="shoot_sp", Color=#c587a5, Show=0
-GraphedExpression="VD_rxcnt", Color=#999401
-GraphedExpression="u6_tx_cnt", Color=#aa1d24
-GraphedExpression="rxcnt_sum", Color=#86d27e
-GraphedExpression="tx_drop_cnt", Color=#2a5191
-GraphedExpression="vt13_wdg_cnt", Color=#f49758
-GraphedExpression="-Motor_MCL_L.sp", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#5f6c3a, Show=0
-GraphedExpression="-Motor_MCL_LL.sp", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#ffcc53, Show=0
-OpenDocument="my_main.cpp", FilePath="D:/Newcode/Gimbal_24hero_CH010_20260111/Core/Src/my_main.cpp", Line=2020
-OpenDocument="stm32f4xx_hal_can.c", FilePath="D:/Newcode/Gimbal_24hero_CH010_20260111/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c", Line=1272
-OpenDocument="main.c", FilePath="D:/Newcode/Gimbal_24hero_CH010_20260111/Core/Src/main.c", Line=107
-OpenDocument="startup_stm32f405xx.s", FilePath="D:/Newcode/Gimbal_24hero_CH010_20260111/startup_stm32f405xx.s", Line=48
-OpenDocument="RM_Lib.cpp", FilePath="D:/Newcode/Gimbal_24hero_CH010_20260111/RM2023_Lib_V1.2/RM_Lib.cpp", Line=2061
-OpenDocument="yuntai.jdebug", FilePath="D:/Newcode/Gimbal_24hero_CH010_20260111/ozone/yuntai.jdebug", Line=0
-OpenDocument="stm32f4xx_hal.c", FilePath="D:/Newcode/Gimbal_24hero_CH010_20260111/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c", Line=388
+GraphedExpression="hipnuc_raw.hi91.pitch", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#35792b
+GraphedExpression="yaw_cont.continuous_yaw", Color=#769dda, Show=0
+GraphedExpression="shoot_sp", Color=#b14f0d, Show=0
+GraphedExpression="Motor_MCL_UP_up.sp", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#b3c38e, Show=0
+GraphedExpression="Motor_MCL_RR.sp", DisplayFormat=DISPLAY_FORMAT_DEC, Color=#ab7b05, Show=0
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=685, h=911, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Timeline", DockArea=RIGHT, x=0, y=0, w=1393, h=911, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="500 ms / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="336;0", DataGraphShowNamesAtCursor=0, PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="1166;-69", CodeGraphLegendShown=0, CodeGraphLegendPosition="1182;0"
-OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=2560, h=510, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=1253, h=130, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Data Sampling", DockArea=BOTTOM, x=0, y=0, w=1344, h=437, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Timeline", DockArea=RIGHT, x=0, y=1, w=1253, h=853, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="500 ms / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="213;0", DataGraphShowNamesAtCursor=0, PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="1026;-69", CodeGraphLegendShown=0, CodeGraphLegendPosition="1042;0"
+OpenWindow="Console", DockArea=BOTTOM, x=1, y=0, w=1215, h=437, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" Pitch_goal";" hipnuc_raw.hi91.pitch";" yaw_cont.continuous_yaw";" shoot_sp";" Motor_MCL_UP_up.sp";" Motor_MCL_RR.sp"], ColWidths=[100;100;100;100;100;100;100;100]
+TableHeader="Data Sampling Setup", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[246;100;124;124;114;124;110;126;276]
 TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
-TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[26;26;26;26]
-TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh";"Access"], ColWidths=[100;100;100;100;285]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;340]
 WatchedExpression="Motor_MCL_UP_up.sp", Window=Watched Data 1
 WatchedExpression="hipnuc_raw.hi91.yaw", Window=Watched Data 1
 WatchedExpression="Motor_MCL_R.sp", Window=Watched Data 1
@@ -41,3 +25,8 @@ WatchedExpression="Motor_MCL_RR.sp", Window=Watched Data 1
 WatchedExpression="-Motor_MCL_LL.sp", Window=Watched Data 1
 WatchedExpression="Motor_MCL_UP.sp", Window=Watched Data 1
 WatchedExpression="tx_drop_cnt", Window=Watched Data 1
+WatchedExpression="tim_bopan", Window=Watched Data 1
+WatchedExpression="bp_cnt", Window=Watched Data 1
+WatchedExpression="BP_calc_targe", Window=Watched Data 1
+WatchedExpression="Shoot_flag", Window=Watched Data 1
+WatchedExpression="servo2_ccr", Window=Watched Data 1

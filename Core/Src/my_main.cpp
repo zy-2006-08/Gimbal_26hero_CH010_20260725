@@ -29,7 +29,7 @@ extern float Yaw_Continuous_Update(float raw_yaw);
 extern void Yaw_Continuous_Reset(void);
 extern float Get_Continuous_Yaw(void);
 
-// 骨架阶段:空实现。业务仍在 main.c,行为不变。
+// 骨架阶段:空实现。业务仍在 main.c,行为不变
 
 /* ===== main.c PTD: globals + business functions (verbatim, order preserved) ===== */
 
@@ -92,18 +92,18 @@ PID_class PID_MCL_UP_sp(MCL_KP, 0, 0, 16000, 0, 0, 16000, 0,0), // 上轮速度P
           PID_MCL_LL_sp(MCL_KP, 0, 0, 16000, 0, 0, 19000, 0, 0);   // 宸﹀悗锟? sp-
     
 PID_class PID_LK_Pitch_Mang(12, 0, 0, 240, 1, 1, 240, 250, 50), //18, 0, 0, 240, 1, 1, 240, 250, 50
-          PID_LK_Pitch_SP(5, 0, 0, 600, 0, 0, 600, 0, 0), //8, 0, 0, 600, 0, 0, 600, 0, 0
+          PID_LK_Pitch_SP(4.5, 0, 0, 600, 0, 0, 600, 0, 0), //8, 0, 0, 600, 0, 0, 600, 0, 0
           PID_LK_Pitch_Mang_zm(13, 0.03, 0, 240, 100, 1, 240, 0.12, 50), //13, 0.03, 0, 240, 100, 1, 240, 0.12, 50
           PID_LK_Pitch_SP_zm(8, 0, 0, 600, 0, 0, 600, 0, 0), //8, 0, 0, 600, 0, 0, 600, 0, 0
-          PID_LK_Erro_Pitch_IMU_MANG(14, 0.15, 0, 240, 500, 1, 240, 0.1, 50), //25, 0.15, 0, 240, 500, 1, 240, 0.1, 50
-          PID_LK_Erro_Pitch_IMU_Gyro(6, 0, 0, 600, 0, 0, 600, 0, 0); //8, 0, 0, 600, 0, 0, 600, 0, 0
+          PID_LK_Erro_Pitch_IMU_MANG(12, 0.12, 0, 240, 500, 1, 240, 0.1, 50), //25, 0.15, 0, 240, 500, 1, 240, 0.1, 50
+          PID_LK_Erro_Pitch_IMU_Gyro(5, 0, 0, 600, 0, 0, 600, 0, 0); //8, 0, 0, 600, 0, 0, 600, 0, 0
 
 PID_class PID_Yaw_mang(12, 0, 0, 500, 100, 0, 500, 50, 0), //7, 0, 0, 500, 100, 0, 500, 50, 0
           PID_Yaw_sp(4, 0, 0, 400, 0, 0, 500, 0,0),   //3.5, 0, 0, 400, 0, 0, 500, 0,0
           PID_Yaw_mang_zm(13.5, 0.05, 0, 500, 100, 0, 500, 0.12, 50), //13.5, 0.05, 0, 500, 100, 0, 500, 0.12, 50
           PID_Yaw_sp_zm(7, 0, 0, 400, 0, 0, 500, 0,0),               // 7, 0, 0, 400, 0, 0, 500, 0,0                                                          
-          PID_YAW_Erro_IMU_MANG(12, 0.12, 0, 500, 100, 0, 500, 0.06,50), //13, 0.07, 200, 500, 100, 0, 500, 0.1,50
-          PID_YAW_Erro_IMU_GYRO(5, 0, 0, 400, 0, 0, 500, 0,0); // 9, 0, 0, 400, 0, 0, 500, 0,0
+          PID_YAW_Erro_IMU_MANG(10, 0.11, 0, 500, 100, 0, 500, 0.1,50), //13, 0.07, 200, 500, 100, 0, 500, 0.1,50
+          PID_YAW_Erro_IMU_GYRO(3.5, 0, 0, 400, 0, 0, 500, 0,0); // 9, 0, 0, 400, 0, 0, 500, 0,0
 
 // 云台单轴双环 PID(Gimbal_Zhou):配置一行到位,风格同 MOTOR_RM。
 //   参数序: GYRO常规组(外,内) GYRO自瞄组(外,内) MANG组(外,内) 外环角度反馈 内环角速度反馈 符号 GYRO内环是否LP
@@ -111,7 +111,8 @@ PID_class PID_Yaw_mang(12, 0, 0, 500, 100, 0, 500, 50, 0), //7, 0, 0, 500, 100, 
 //   PITCH: GYRO内环不带LP(false),外环反馈 hi91.pitch,   内环反馈 gyr[0], 符号 -1 (重力补偿保持关闭)
 Gimbal_Zhou Yaw_calc(&PID_Yaw_mang, &PID_Yaw_sp, &PID_Yaw_mang_zm, &PID_Yaw_sp_zm,
                      &PID_YAW_Erro_IMU_MANG, &PID_YAW_Erro_IMU_GYRO,
-                     &yaw_cont.continuous_yaw, &hipnuc_raw.hi91.gyr[2], -1.0f, true);
+                     &yaw_cont.continuous_yaw, &hipnuc_raw.hi91.gyr[2], -1.0f, true,
+                     1.0f, 1.0f, 1.0f, &hipnuc_raw.hi91.gyr[2]); // MANG 内环用差分角速度(带死区滤波)
 
 Gimbal_Zhou Pitch_calc(&PID_LK_Pitch_Mang, &PID_LK_Pitch_SP, &PID_LK_Pitch_Mang_zm, &PID_LK_Pitch_SP_zm,
                        &PID_LK_Erro_Pitch_IMU_MANG, &PID_LK_Erro_Pitch_IMU_Gyro,
@@ -173,7 +174,7 @@ LED_Mapping_t led_mappings[5];
 
 // 底盘保险开关: 1=启用 0=关闭(整段功能不编译, 等同注释掉)
 // 生效时: 部署模式(按R,5250)下若底盘4个电机全部掉线, 待其全部恢复上线自动退出部署 -> 摩擦轮回落 Near(3700)
-#define CHASSIS_SAFE_ENABLE 0
+#define CHASSIS_SAFE_ENABLE 1
 
 /********  通信标志  **********/
 uint16_t YT_Tx_static_Flag = 0, // 云台发送静态标志位 bool
@@ -212,7 +213,8 @@ float shoot_sp = 11.9;
 int16_t L_targe_sp, R_targe_sp, UP_targe_sp, RR_targe_sp, LL_targe_sp, UPUP_targe_sp;
 uint8_t MCL_Start_flag = 0;
 int16_t MCL_MID;                                                                       // 摩擦轮中�?
-int16_t MCL_MAX_Speed_Near = 3700, MCL_MAX_Speed_Far = 5190, MCL_MAX_Speed_Now = 3700; // 5170鏀逛负3750,3700锛?5200
+int16_t MCL_MAX_Speed_Near = 3685, MCL_MAX_Speed_Far = 5070, MCL_MAX_Speed_Now = 3700; // 5170鏀逛负3750,3700锛?5200，5170，5070，5090
+//3650，5070
 uint8_t MCL_ON_flag = 0;
 
 // 鎷ㄧ洏
@@ -301,10 +303,13 @@ float kk_pitch_mang_lp = 1;
 float PitchGyro_AngleError = 0.0f;
 float pitch_angle;
 float pitch_angle_mang;
-float vision_pitch = 33.7;
+float vision_pitch = 34.9;
 
 float vision_distance = 0;
 uint8_t Pitch_arr_flag = 0;
+// 辅助吊射 pitch 一键到位(按R触发缓动到 -vision_pitch, 操作手动摇杆则中断交手动)
+uint8_t diaoshe_pitch_arr_flag = 0;   // 1=缓动进行中
+float   diaoshe_pitch_incbuf = 0.0f;  // F_slow_ease 缓冲
 float Pitch_X;
 // 坐标变换
 float theta_angle = 0, theta_rad = 0;
@@ -350,6 +355,16 @@ uint8_t telescope_ON = 0;
 uint8_t servo_confirm_flag = 0;
 uint16_t servo_confirm_timer = 0;
 uint16_t servo_original_ccr = 0;
+// ===== 吊射模式新增舵机(TIM1_CH2 / PA9)相关 =====
+// CCR 值即脉宽微秒数(1MHz 计数, 20ms 周期 / 50Hz)
+#define DEPLOY_SERVO_CCR_PARK  3450   // 非部署(双上/其它模式)停放脉宽(μs)
+#define DEPLOY_SERVO_CCR_INIT  3450   // 部署舵机初值(μs), 围绕此值上下调节
+#define DEPLOY_SERVO_CCR_MIN   3315   // 部署舵机可调下限(μs)
+#define DEPLOY_SERVO_CCR_MAX   3615   // 部署舵机可调上限(μs)
+#define DEPLOY_SERVO_STEP      1                                                              // 每控制周期步进(μs), 50Hz 下约 150μs/s, 数值越大越快
+// 当前部署舵机脉宽; 持久保存, 退出部署时不复位 -> 下次进入部署记住上一次位置
+uint16_t deploy_servo_ccr = DEPLOY_SERVO_CCR_INIT;
+uint16_t servo2_ccr = DEPLOY_SERVO_CCR_PARK;
 // 拨盘相关
 union
 {
@@ -423,35 +438,47 @@ uint8_t MCL_Logic()
   static float MCL_I16slow_incbuf = 0;
   static UpDown_check_class UD_MCL(0), UD_C(0), UD_X(0), UD_TURN(0);
   static uint8_t now_state;
-  //根据模式设置摩擦轮�?�度
-  if (MYmode == DIAO_SHE_MODE || deploy_flag || MYmode == SHANG_XIA_MODE)
+  // 进入模式 或 双下按R切换部署 时, 重设一次默认速度(边沿触发), 之后由摇杆 toggle 控制。
+  // 用 (MYmode, deploy_flag) 组合做边沿: 双下按R使 deploy_flag 变化 -> 触发重设 -> 自动提Far/回Near
+  static uint8_t last_mymode = 0xFF;
+  static uint8_t last_deploy = 0xFF;
+  if (MYmode != last_mymode || deploy_flag != last_deploy)
   {
-    MCL_MAX_Speed_Now = MCL_MAX_Speed_Far;  // 5050
+    if (MYmode == DIAO_SHE_MODE || deploy_flag || MYmode == SHANG_XIA_MODE)
+      MCL_MAX_Speed_Now = MCL_MAX_Speed_Far;   // 吊射/上下/双下已部署: 默认远距
+    else if (MYmode != PROTECT_MODE)
+      MCL_MAX_Speed_Now = MCL_MAX_Speed_Near;  // 其它模式(含双下未部署): 默认近距
+    last_mymode = MYmode;
+    last_deploy = deploy_flag;
   }
-  else if (MYmode != PROTECT_MODE) 
-  {
-    MCL_MAX_Speed_Now = MCL_MAX_Speed_Near;  // 3685
-  }
-  //保护模式切换摩擦轮�?�度
+
+  // 遥控变速: 仅摩擦轮未开(MCL_ON_flag != 1)时, 摇杆手势上升沿在 Far/Near 间切换
   if (MYmode == PROTECT_MODE)
   {
+    // 双上保护: 左摇杆推左上角切换
     now_state = (YK.yaogan.ch2 < -500 && YK.yaogan.ch3 > 500);
-    if (UD_TURN.updata(now_state) == UpDown_check_rising && MCL_ON_flag != 1)
-    {
-      if (MCL_MAX_Speed_Now == MCL_MAX_Speed_Far)
-      {
-        MCL_MAX_Speed_Now = MCL_MAX_Speed_Near;
-      }
-      else
-      {
-        MCL_MAX_Speed_Now = MCL_MAX_Speed_Far;
-      }
-    }
   }
-	else if(MYmode == DIAO_SHE_MODE || MYmode == SHANG_XIA_MODE)
-	{
+  else if (MYmode == DIAO_SHE_MODE || MYmode == SHANG_XIA_MODE)
+  {
     MCL_ON_flag = (YK.yaogan.ch1 > 600);
-	}
+    // 吊射/上下: 右摇杆推右上角切换
+    now_state = (YK.yaogan.ch0 > 500 && YK.yaogan.ch1 < -500);
+  }
+  else if (MYmode == ZHAN_DOU_MODE)
+  {
+    // 双下战斗: 右摇杆推右下角切换(避开射击手势 ch1>500)
+    now_state = (YK.yaogan.ch0 > 500 && YK.yaogan.ch1 < -500);
+  }
+  else
+  {
+    now_state = 0;
+  }
+  if (UD_TURN.updata(now_state) == UpDown_check_rising && MCL_ON_flag != 1)
+  {
+    MCL_MAX_Speed_Now = (MCL_MAX_Speed_Now == MCL_MAX_Speed_Far)
+                          ? MCL_MAX_Speed_Near
+                          : MCL_MAX_Speed_Far;
+  }
   // 键盘控制摩擦轮开�?
   if (MYmode == ZHAN_DOU_MODE || MYmode == SHUANG_ZHONG_MODE || MYmode == DIAO_SHE_MODE || MYmode == DAN_YUN_TAI_MODE || MYmode == SHANG_XIA_MODE)
   {
@@ -466,7 +493,7 @@ uint8_t MCL_Logic()
   if (MYmode == PROTECT_MODE)
   {
     MCL_protect_cansend_200_flag = 1;
-    MCL_protect_cansend_1FF_flag = 1;
+    // MCL_protect_cansend_1FF_flag 已废弃: 0x1FF 由 htim12 常驻统一发送
     MCL_4_motorflag = 0; // 清除电机接收标志�?
     MCL_2_motorflag = 0;
     MCL_Start_flag = 0;
@@ -491,18 +518,38 @@ uint8_t MCL_Logic()
   I16_slow(&MCL_slow_speed, MCL_targe_sp, 200, 200, 300, &MCL_I16slow_incbuf);
 
   // 设置各电机目标�?�度
-  if (MCL_Start_flag)
+  if (MCL_ON_flag)   // 仅摩擦轮真正开启(按B)时才给目标转速
   {
-    L_targe_sp = MCL_slow_speed - 14;
-    R_targe_sp = MCL_slow_speed - 6;
-    UP_targe_sp = MCL_slow_speed - 20;
-    RR_targe_sp = MCL_slow_speed - 15;
-    LL_targe_sp = MCL_slow_speed - 7;
-    UPUP_targe_sp = MCL_slow_speed - 14;
+    if (MCL_MAX_Speed_Now == MCL_MAX_Speed_Far)
+    {
+      // 远距: 差速(一级比二级低1150)
+      L_targe_sp = MCL_slow_speed - 1150;//一级
+      R_targe_sp = MCL_slow_speed - 1150;//一级
+      UP_targe_sp = MCL_slow_speed;//二级
+      RR_targe_sp = MCL_slow_speed;//二级
+      LL_targe_sp = MCL_slow_speed;//二级
+      UPUP_targe_sp = MCL_slow_speed - 1150;//一级
+    }
+    else
+    {
+      // 近距: 不差速, 六轮同转速
+      L_targe_sp = MCL_slow_speed;
+      R_targe_sp = MCL_slow_speed;
+      UP_targe_sp = MCL_slow_speed;
+      RR_targe_sp = MCL_slow_speed;
+      LL_targe_sp = MCL_slow_speed;
+      UPUP_targe_sp = MCL_slow_speed;
+    }
   }
-  else // 淇濇姢妯″紡鏃剁洰鏍囷拷?锟藉害=缂撳彉閫熷害
+  else // 摩擦轮未开(含保护模式): 六个目标全部归零, 缓变速度清零
   {
-      MCL_slow_speed = 0;
+    L_targe_sp = 0;
+    R_targe_sp = 0;
+    UP_targe_sp = 0;
+    RR_targe_sp = 0;
+    LL_targe_sp = 0;
+    UPUP_targe_sp = 0;
+    MCL_slow_speed = 0;
   }
 
   return MCL_ON_flag;
@@ -576,8 +623,8 @@ void BP_Logic(uint8_t MCL_ON_flag)
     int32_t BP_inc = BoPan.mang_inf % int_shot;
     int bp_err_test = BP_calc_targe - BoPan.mang_inf;
 
-    // if (Shoot_flag && (abs(bp_err_test) < 2500) && (heat_flag || YK.Pressed_Check(KEY_PRESSED_CTRL)))
-  if (Shoot_flag && (abs(bp_err_test) < 2500))
+    if (Shoot_flag && (abs(bp_err_test) < 2500) && (heat_flag || YK.Pressed_Check(KEY_PRESSED_CTRL)))
+  // if (Shoot_flag && (abs(bp_err_test) < 2500))
     {
       targe_inc = (BP_inc < -20000) ? -((int_shot + BP_inc) + int_shot) : -(int_shot + BP_inc);
       BP_calc_targe = BoPan.mang_inf + targe_inc;
@@ -657,7 +704,8 @@ void Mini_Pitch_2006_Logic()
     // m2006_cnt++;
     Mini_Pitch_targe += (float)(YK.yaogan.ch3) / Mini_Pitch_manual_speed;
   }
-  else if (MYmode == DIAO_SHE_MODE || deploy_flag || Mini_Pitch_E_key_flag || MYmode == SHANG_XIA_MODE)
+  // 键盘 E 不再触发吊射位：双下(ZHAN_DOU_MODE)按 E 保持双下状态，不进入部署/吊射位
+  else if (MYmode == DIAO_SHE_MODE || deploy_flag || MYmode == SHANG_XIA_MODE)  
   {
     Mini_Pitch_MODE = MANG_MODE;
     Mini_Pitch_calc_targe = DIAO_SHE_ENCODER_OFFSET;
@@ -735,12 +783,7 @@ void Communication_boards(void)
     CAN_1.Send_RM(0x200, 0, 0, 0, 0); // 保护6个摩擦轮
     MCL_protect_cansend_200_flag = 0;
   }
-  else if (MCL_protect_cansend_1FF_flag)
-  {
-    // 0x1FF组：摩擦轮UPUP/RR保护置0，但2006(0x207)在同组第3字段，需保留其电流避免小pitch掉落
-    CAN_1.Send_RM(0x1FF, 0, 0, Mini_Pitch_output, 0);
-    MCL_protect_cansend_1FF_flag = 0;
-  }
+  // 0x1FF 帧已改由 htim12(1kHz) 常驻统一发送(保护模式下摩擦轮电流自动为0), 此处不再单独发送以避免双源冲突
 }
 // 定时�?12回调
 void TIM12_Callback(void)
@@ -807,7 +850,7 @@ uint16_t Mini_PITCH_Get_PWM()
 uint16_t Telescope_Get_PWM()
 {
   static uint16_t telescope_ccr = 0;
-  static const uint16_t bj_en_ccr = 4900;
+  static const uint16_t bj_en_ccr = 3700;
   static UpDown_check_class UD_E(0);
 
   //保护模式切换摩擦轮�?�度
@@ -823,15 +866,16 @@ uint16_t Telescope_Get_PWM()
   }
   else
   {
+    //  telescope_ccr = bj_en_ccr;
     telescope_ccr = 1300;
     // telescope_ccr = 2000;   
   }
 
-  // // E键控制望远镜
-  // if (UD_E.updata(YK.Pressed_Check(KEY_PRESSED_E)) == UpDown_check_rising)
-  // {
-  //   telescope_ON = !telescope_ON;
-  // }
+  // E键控制望远镜
+  if (UD_E.updata(YK.Pressed_Check(KEY_PRESSED_E)) == UpDown_check_rising)
+  {
+    telescope_ON = !telescope_ON;
+  }
 
   return LIMIT(telescope_ccr, 1150, 4900);
 }
@@ -953,7 +997,6 @@ void YAW_Angle_Update(void)
 void PITCH_Logic(void)
 {
   static uint8_t now_state_pitch;
-  static UpDown_check_class UD_TURN_P(0);
   
   uint8_t hipnuc_ok = (hipnuc_raw.hi91.tag != 0);
   
@@ -966,10 +1009,6 @@ void PITCH_Logic(void)
   // else if (MYmode == DIAO_SHE_MODE || MYmode == SHANG_XIA_MODE || (!hipnuc_ok && MYmode == ZHAN_DOU_MODE))  
   {
     pitch_control_mode = MANG_MODE;
-    if (UD_TURN_P.updata(YK.yaogan.ch0 > 500 && YK.yaogan.ch1 < -500) == UpDown_check_rising)
-    {
-      Pitch_goal = -vision_pitch;
-    }
   }
   else
   {
@@ -997,7 +1036,28 @@ void PITCH_PID_Calc(void)
   else if (pitch_control_mode == MANG_MODE)
   {
     float ws_pitch = YK.Pressed_Check(KEY_PRESSED_CTRL) ? 0.0f : (YK.Pressed_Check(KEY_PRESSED_W) - YK.Pressed_Check(KEY_PRESSED_S)) * 0.002f;
-    Pitch_goal -= ((float)(YK.yaogan.ch3 / Pitch_YK_MANG_Speed) + ws_pitch);
+    // 辅助吊射一键到位: 缓动进行中且操作手未介入 -> F_slow_ease 平滑逼近雷达目标(-vision_pitch, 已含弹道);
+    //                 操作手动 ch3 摇杆 或 W/S 键 -> 立刻中断缓动交手动微调
+    uint8_t manual_intervene = (abs(YK.yaogan.ch3) > 3) || YK.Pressed_Check(KEY_PRESSED_W) || YK.Pressed_Check(KEY_PRESSED_S);
+    // 辅助吊射数据保险: vision_pitch 绝对值 > 100 视为坏数据(丢包/乱值/未刷新),
+    // 缓动目标兜底为安全角度 -34.6 度(方向同正常吊射), 避免炮台冲到极值; 正常值仍用 -vision_pitch
+    // 辅助吊射数据保险: 仅接受落在合理吊射区间 [20, 43] 度内的雷达 pitch 作为有效目标;
+    // 其余情况(发 0 / 绝对值 > 100 / 丢包残留 / 乱值)一律视为坏数据, 缓动目标兜底安全角 -34.6 度,
+    // 方向同正常吊射, 避免炮台放平到 0 或冲到极值。
+    float diaoshe_pitch_target = (vision_pitch >= 33.0f && vision_pitch <= 38.0f) ? -vision_pitch : -35.0f;
+    if (diaoshe_pitch_arr_flag && !manual_intervene)
+    {
+      // 参数(真车调整): max_step/min_step 度每2kHz周期, k 减速系数, stop_err 到达阈值
+      F_slow_ease(&Pitch_goal, diaoshe_pitch_target, 0.15f, 0.02f, 0.02f, 0.1f, &diaoshe_pitch_incbuf);
+      if (fabsf(Pitch_goal - diaoshe_pitch_target) <= 0.1f)
+        {diaoshe_pitch_arr_flag = 0;}  // 到位, 交手动
+    }
+    else
+    {
+      if (diaoshe_pitch_arr_flag)
+        {diaoshe_pitch_arr_flag = 0;}  // 操作手介入 -> 中断缓动
+      Pitch_goal -= ((float)(YK.yaogan.ch3 / Pitch_YK_MANG_Speed) + ws_pitch);
+    }
     Pitch_goal = LIMIT(Pitch_goal, -43, 16);
     PITCH_PID_OUT = Pitch_calc.Mang_calc(Pitch_goal);  // MANG 单组,一行调用
   }
@@ -1022,15 +1082,21 @@ void YAW_Turn_Handle(void)
 void Servo_PWM_Output()
 {
   uint16_t telescope_ccr = Telescope_Get_PWM();
-  // uint16_t mini_pitch_ccr = Mini_PITCH_Get_PWM();  // 已禁用：现在使用2006电机
-
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, telescope_ccr);
-  // *in = target;，
+
+  // 部署舵机(TIM1_CH2 / PA9):
+  //   仅 吊射模式 或 双下按R进入部署(deploy_flag) -> 输出 V/G 可调的 deploy_servo_ccr
+  //   其它一切情况(双上, 双下未按R, 其它模式) -> 停放位 3450, 舵机不动
+  // deploy_servo_ccr 退出部署不复位, 下次按R进入恢复上次调好的位置
+  if (MYmode == DIAO_SHE_MODE || (MYmode == ZHAN_DOU_MODE && deploy_flag))
+    servo2_ccr = deploy_servo_ccr;
+  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, servo2_ccr);
 }
 // 键盘特殊功能处理
 void Keyboard_Special_Func()
 {
   static UpDown_check_class UD_XTL(0), UD_R(0), UD_Deploy_Turn(0), UD_Arr_PY(0), UD_Boost(0), UD_MCL_Speed_Turn(0),UD_Z(0),UD_X(0),UD_C(0);
+  static UpDown_check_class UD_Diaoshe_Pitch(0);  // 辅助吊射 pitch 一键到位 R 键专用边沿
   static int targe_f = YT_Erro;
   static uint8_t mini_pitch_anjian_flag = 0;
 
@@ -1046,8 +1112,12 @@ void Keyboard_Special_Func()
   /**鎸夐敭鍔熻兘 */
   if (jianshu_ctrl_flag == ENABLE_MODE)
   {
-    // Q�? - 小陀�?
-    if (UD_XTL.updata(YK.Pressed_Check(KEY_PRESSED_Q)) == UpDown_check_rising && !YK.Pressed_Check(KEY_PRESSED_CTRL))
+    // 部署模式锁: 进入部署(deploy_flag != 0)后, 仅保留 R(退出) 与 A/W/S/D(微调),
+    // 其余功能键(Q/F/V/G/boost 等)全部禁用, 直到完全退出部署(deploy_flag == 0)方可解除禁用。
+    // 在进入本轮时锁存状态, 避免同一轮内按 R 退出时误放开其他键。
+    const uint8_t deploy_lock = deploy_flag;
+    // Q�? - 小陀�?  (部署模式下禁用; updata 仍每轮调用以保持边沿同步)
+    if (UD_XTL.updata(YK.Pressed_Check(KEY_PRESSED_Q)) == UpDown_check_rising && !YK.Pressed_Check(KEY_PRESSED_CTRL) && !deploy_lock)
     {
       XTL_flag = !XTL_flag;
       if (XTL_flag)
@@ -1061,8 +1131,8 @@ void Keyboard_Special_Func()
         }
       }
     }
-    // G锟? - boost
-    if (UD_Boost.updata(boost_flag) == UpDown_check_rising)
+    // G锟? - boost  (部署模式下禁用其副作用; updata 仍每轮调用以保持边沿同步)
+    if (UD_Boost.updata(boost_flag) == UpDown_check_rising && !deploy_lock)
     {
       mini_pitch_anjian_flag = 0;
       Pitch_goal = 0;
@@ -1072,12 +1142,17 @@ void Keyboard_Special_Func()
     if (UD_R.updata(YK.Pressed_Check(KEY_PRESSED_R)) == UpDown_check_rising && !YK.Pressed_Check(KEY_PRESSED_CTRL))
     {
       deploy_flag = !deploy_flag;
+      // 进入吊射部署模式时清零小陀螺状态; 退出部署后 XTL_flag 保持为 0(不自动恢复),
+      // 因此不会因先前处于小陀螺而在退出部署时重新进入小陀螺。
+      if (deploy_flag)
+        XTL_flag = 0;
       mini_pitch_anjian_flag = 0;
-      telescope_ON = deploy_flag ? 1 : 0;
-      // Pitch_goal = -36.5f;
+      // telescope_ON = deploy_flag ? 1 : 0;
+      diaoshe_pitch_arr_flag = 1;
+      diaoshe_pitch_incbuf = 0.0f;      
     }
-    // F�? - 展开模式旋转180�?
-    if (UD_Deploy_Turn.updata(YK.Pressed_Check(KEY_PRESSED_F)) == UpDown_check_rising && !YK.Pressed_Check(KEY_PRESSED_CTRL) && deploy_flag)
+    // F�? - 展开模式旋转180�?  (部署模式下禁用; updata 仍每轮调用以保持边沿同步)
+    if (UD_Deploy_Turn.updata(YK.Pressed_Check(KEY_PRESSED_F)) == UpDown_check_rising && !YK.Pressed_Check(KEY_PRESSED_CTRL) && deploy_flag && !deploy_lock)
     {
       if (YT_Erro > 32767)
       {
@@ -1108,6 +1183,17 @@ void Keyboard_Special_Func()
     else
     {
       mini_pitch_deploy_offset = 0;
+    }
+
+    // 吊射模式(或战斗模式已展开): V 键缓慢增大脉宽 / G 键缓慢减小脉宽(按住持续动, 松手停在当前位置)
+    if (MYmode == DIAO_SHE_MODE || (MYmode == ZHAN_DOU_MODE && deploy_flag))
+    {
+      // 部署模式下禁用 V/G 脉宽微调; 独立吊射模式(DIAO_SHE_MODE, 非 R 进入)仍可用
+      if (YK.Pressed_Check(KEY_PRESSED_V) && !YK.Pressed_Check(KEY_PRESSED_CTRL))
+        deploy_servo_ccr += DEPLOY_SERVO_STEP;
+      if (YK.Pressed_Check(KEY_PRESSED_G) && !YK.Pressed_Check(KEY_PRESSED_CTRL) )
+        deploy_servo_ccr -= DEPLOY_SERVO_STEP;
+      deploy_servo_ccr = LIMIT(deploy_servo_ccr, DEPLOY_SERVO_CCR_MIN, DEPLOY_SERVO_CCR_MAX);  // 限制 3315~3615
     }
   }
   else
@@ -1153,7 +1239,7 @@ void Deploy_Timeout_Check(void)
 void Chassis_Safe_Guard(void)
 {
   static uint8_t chassis_was_offline = 0;
-  if (!deploy_flag) // 非部署模式: 不监测, 复位状态
+  if (!deploy_flag) // 非部署: 不监测, 复位状态 (deploy_flag 已为0, 摩擦轮自然维持 Near 低速)
   {
     chassis_was_offline = 0;
     return;
@@ -1161,12 +1247,12 @@ void Chassis_Safe_Guard(void)
   uint8_t all_online = Chassis_Motor_M1_OK && Chassis_Motor_M2_OK && Chassis_Motor_M3_OK && Chassis_Motor_M4_OK;
   if (!all_online)
   {
-    chassis_was_offline = 1; // 4个电机全部掉线 -> 记住曾下线
+    chassis_was_offline = 1; // 底盘电机(任一)掉线 -> 记住曾下线
   }
-  else if (chassis_was_offline) // 曾下线 且 现已全部恢复 -> 上升沿
+  else if (chassis_was_offline) // 曾下线 且 现已全部恢复上线 -> 上升沿, 触发一次
   {
-    deploy_flag = 0; // 退出部署 -> 摩擦轮回落 Near(3700)
-    chassis_was_offline = 0;
+    deploy_flag = 0;         // 退出部署 -> MCL_Logic 下一轮读到 !deploy_flag -> 摩擦轮回落 Near(3700) 降速
+    chassis_was_offline = 0; // 清标志: 触发一次即可, 之后 deploy_flag=0 会走上面提前返回分支, 不再反复触发
   }
 }
 #endif
@@ -1621,11 +1707,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 8khz
         Mini_Pitch_output = 0;
       }
 
-      // 0x1FF 组统一发送点：由2006反馈(常驻1kHz)驱动，确保2006指令稳定；
-      // 摩擦轮UPUP(0x205)/RR(0x206)电流未就绪时为0，就绪后由下方摩擦轮分支更新其PID输出值
-      CAN_1.Send_RM(0x1FF, MCL_Start_flag ? PID_MCL_UPUP_sp.OUT_PID : 0,
-                           MCL_Start_flag ? PID_MCL_RR_sp.OUT_PID : 0,
-                           Mini_Pitch_output, 0);
+      // 注意：0x1FF 帧不再由此2006分支发送(2006无反馈时会导致摩擦轮UPUP/RR收不到电流)，
+      // 改由下方摩擦轮反馈分支统一发送，见本函数末尾
     }
     // ===== 摩擦轮反馈处理：仅在摩擦轮启动时 =====
     else if (MCL_Start_flag)
@@ -1682,11 +1765,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) // 8khz
 
    if (MCL_2_motorflag == 0x3)
    {
-     // 注意：0x1FF 帧已由上方2006反馈分支统一发送(带摩擦轮UPUP/RR电流)，此处不再重复发送，仅计算摩擦轮均速
+     // 此处仅计算摩擦轮均速; 0x1FF 帧已改由 htim12(1kHz) 统一发送, 反馈中断只更新PID输出值
      MCL_2_motorflag = 0;
      MCL_MID = (Motor_MCL_L.sp - Motor_MCL_R.sp - Motor_MCL_UP_up.sp + Motor_MCL_LL.sp - Motor_MCL_UP.sp - Motor_MCL_RR.sp) / 6; // 摩擦轮平均转速，用于判断摩擦�?
    }
-    }
+     }
   }
 }
 
@@ -1738,6 +1821,14 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) // 4khz
         BP_calc_targe = BoPan.mang_inf;
         PID_BP_sp.PID_update(0, BoPan.sp);
         BP_output = PID_BP_sp.OUT_PID;
+      }
+      else if (BP_MODE == PROTECT_MODE)
+      {
+        BP_protect_cansend_flag = 1;
+        BP_ON_flag = 0;
+        BP_targe = BoPan.mang_inf;
+        BP_calc_targe = BoPan.mang_inf;
+        BP_output = 0;  // 源头清零: 保护态下即使 htim12 无条件发送 0x200, 电流也恒为 0, 消除拨盘上电疯转
       }
     }
     // 注意：Mini_Pitch_2006 已迁移到 CAN1(0x207)，其反馈处理见 HAL_CAN_RxFifo0MsgPendingCallback
@@ -1793,7 +1884,6 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) // 4khz
   }
 // 2006已迁移到CAN1，此处CAN2的0x200组只发拨盘(0x201)
 }
-
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim == &htim12) // 1khz
@@ -1803,9 +1893,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     tim_bopan = !tim_bopan;
     if (tim_bopan)
     {
-              bp_cnt++;
         CAN_2.Send_RM(0x200, BP_output, 0, 0, 0); 
     }
+    // 0x1FF 组(0x205/0x206摩擦轮 + 0x207 mini_pitch)统一发送点：
+    // 固定1kHz节拍, 与反馈中断解耦 -> 帧率恒定不冲邮箱; 2006独立于摩擦轮控制。
+    // 摩擦轮未启动时其PID不更新, 电流置0; mini_pitch电流常驻(掉线时已在50Hz处归0)。
+    CAN_1.Send_RM(0x1FF, MCL_Start_flag ? PID_MCL_UPUP_sp.OUT_PID : 0,
+                         MCL_Start_flag ? PID_MCL_RR_sp.OUT_PID : 0,
+                         Mini_Pitch_output, 0);
   }
   if (htim == &htim9) // 2kHz
   {
@@ -1818,8 +1913,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       PITCH_PID_Calc();
 
       // 发�?�摩擦轮数据
-//      CAN_2.Broadcast_Send_LK(0, YAW_PID_OUT, 0, 0);
-      CAN_2.Broadcast_Send_LK(PITCH_PID_OUT, YAW_PID_OUT, 0, 0);			
+      //CAN_2.Broadcast_Send_LK(0, YAW_PID_OUT, 0, 0);
+     CAN_2.Broadcast_Send_LK(PITCH_PID_OUT, YAW_PID_OUT, 0, 0);			
       can_scan = 0;
     }
     else
@@ -1916,6 +2011,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     if (timeout_mcl_upup < 255) timeout_mcl_upup++;
     if (timeout_imu < 255) timeout_imu++;
     if (timeout_mini_pitch < 255) timeout_mini_pitch++;
+    // 2006(0x207)掉线(>100ms 无反馈)时电流归0, 使0x1FF第3字段发0; 摩擦轮UPUP/RR照常发
+    if (timeout_mini_pitch > 5) Mini_Pitch_output = 0;
 
     // 更新超电电压标志
     V_Cap_OK_flag = (V_Cap_Real != 0);

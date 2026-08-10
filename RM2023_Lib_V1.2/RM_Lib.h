@@ -39,6 +39,7 @@ extern bool IsCrc16Good(const unsigned char *pData, uint16_t nLength);  // 检�
 extern void I16_slow(int16_t *in, int16_t target, float add_inc, float cut_inc, int16_t stop_err, float *inc_buf); // int16增量缓变
 extern void I_slow(int *in, int target, float add_inc, float cut_inc, int stop_err, float *inc_buf);               // int增量缓变
 extern void I_slow_ease(int *in, int target, float max_step, float min_step, float k, int stop_err, float *inc_buf); // 缓出型斜坡
+extern void F_slow_ease(float *in, float target, float max_step, float min_step, float k, float stop_err, float *inc_buf); // float缓出型斜坡(度数用)
 
 /**************************************** C A N **********************************************************/
 class USER_CAN
@@ -530,6 +531,7 @@ class Gimbal_Zhou
     PID_class *pid_mang_wai, *pid_mang_nei; // MANG 组 外环/内环(独立第三组)
     float *fankui_wai_angle;             // 外环角度反馈 (YAW=continuous_yaw, PITCH=hi91.pitch)
     float *fankui_gyro;                  // 内环角速度反馈 (YAW=gyr[2], PITCH=gyr[0])
+    float *fankui_mang_gyro;             // MANG 内环角速度反馈(不传则复用 fankui_gyro)
     float output_sign;                   // 输出符号(两轴现状均 -1)
     bool  nei_use_lp;                    // GYRO 内环是否用 PID_update_LP(YAW=true) 或 PID_update(PITCH=false)
     float lp_wai, lp_nei;                // GYRO 外环/内环 LP 系数(现状均 1)
@@ -539,10 +541,12 @@ class Gimbal_Zhou
     Gimbal_Zhou(PID_class *wai, PID_class *nei, PID_class *wai_zm, PID_class *nei_zm,
                 PID_class *mang_wai, PID_class *mang_nei,
                 float *fk_angle, float *fk_gyro, float sign, bool use_lp,
-                float lpw = 1.0f, float lpn = 1.0f, float lp_mw = 1.0f)
+                float lpw = 1.0f, float lpn = 1.0f, float lp_mw = 1.0f,
+                float *fk_mang_gyro = nullptr)
         : pid_wai(wai), pid_nei(nei), pid_wai_zm(wai_zm), pid_nei_zm(nei_zm),
           pid_mang_wai(mang_wai), pid_mang_nei(mang_nei),
           fankui_wai_angle(fk_angle), fankui_gyro(fk_gyro),
+          fankui_mang_gyro(fk_mang_gyro ? fk_mang_gyro : fk_gyro), // 不传则复用 GYRO 反馈
           output_sign(sign), nei_use_lp(use_lp), lp_wai(lpw), lp_nei(lpn), lp_mang_wai(lp_mw),
           goal(0.0f), output(0.0f) {}
 

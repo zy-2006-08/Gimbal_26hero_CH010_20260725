@@ -1,0 +1,46 @@
+=== Task 2: CT combined-frame byte-layout host unit test ===
+Date: 2026-07-22
+Test file: scripts/test_ct_frame.c (pure C, no STM32/HAL headers, NOT in firmware build)
+Source of truth: Core/Src/my_main.cpp:2154 (CT_HEADER_LEN=16), :2176-2191 (VD_2rx parse)
+
+--- IMPORTANT HOST-COMPILE NOTE ---
+The MSYS2 gcc at D:\SOFTWARE\MSYS2\mingw64\bin\gcc.exe fails SILENTLY (exit 1, no
+stderr) when its bin directory is NOT on PATH - it cannot locate cc1/its DLLs.
+FIX: prepend the mingw64 bin dir to PATH before invoking:
+  $env:PATH = "D:\SOFTWARE\MSYS2\mingw64\bin;" + $env:PATH
+
+--- COMPILE COMMAND ---
+$env:PATH = "D:\SOFTWARE\MSYS2\mingw64\bin;" + $env:PATH
+D:\SOFTWARE\MSYS2\mingw64\bin\gcc.exe scripts\test_ct_frame.c -O0 -Wall -o C:\Users\zy147\AppData\Local\Temp\opencode\test_ct_frame.exe
+
+--- 1) HAPPY RUN (correct 33.7f) ---
+COMPILE_EXIT=0
+ALL ASSERTIONS PASSED
+RUN_EXIT=0                          <-- PASS (exit 0)
+
+--- 2) NEGATIVE CONTROL (temporarily changed assertion to p == 99.9f) ---
+COMPILE_EXIT=0
+ASSERTION FAILED: p == 99.9f (line 103)
+1 ASSERTION(S) FAILED
+RUN_EXIT=1                          <-- CORRECTLY FAILS (exit non-zero) => test is real
+
+--- 3) POST-REVERT RUN (reverted assertion to p == exp_pitch / 33.7f) ---
+COMPILE_EXIT=0
+ALL ASSERTIONS PASSED
+RUN_EXIT=0                          <-- PASS again (exit 0)
+
+--- FINAL STATE ---
+scripts/test_ct_frame.c is left in the CORRECT (passing) state.
+No firmware source, CMake, or MDK-ARM project files were modified.
+
+--- WHAT THE TEST VALIDATES ---
+- Builds a 320-byte frame: [0]='C',[1]='T',[2..3]=len 12 LE,
+  pitch=33.7f@[4..7], yaw=-2.9f@[8..11], distance=1.25f@[12..15],
+  [16]='V',[17]='D', video payload buf[20+i]=(i&0xFF) for i in 0..299.
+- Replicates firmware parse: memcpy(&p,buf+4,4), memcpy(&y,buf+8,4),
+  memcpy(&d,buf+12,4), video = buf + CT_HEADER_LEN(16) + 4 = buf+20, 300 bytes.
+- Asserts floats bit-exact (both == and memcmp), header magic bytes,
+  length field LE==12, video region memcmp-equal, sizeof(buf)==320,
+  VIDEO_OFFSET==20, TOTAL_LEN==320.
+- Both host x86 and Cortex-M4 are little-endian + float=4 bytes, so this
+  host test validates the firmware's layout/endianness assumptions.

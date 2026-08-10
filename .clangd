@@ -1,2 +1,11 @@
 CompileFlags:
   CompilationDatabase: build/Debug
+  Add:
+    - -isystem
+    - D:/GCC/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/arm-none-eabi/include
+    - -isystem
+    - D:/GCC/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/lib/gcc/arm-none-eabi/15.2.1/include
+    - -isystem
+    - D:/GCC/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/arm-none-eabi/include/c++/15.2.1
+    - -isystem
+    - D:/GCC/arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi/arm-none-eabi/include/c++/15.2.1/arm-none-eabi

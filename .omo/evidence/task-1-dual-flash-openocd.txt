@@ -1,0 +1,14 @@
+﻿openocd : xPack Open On-Chip Debugger 0.12.0+dev-02228-ge5888bda3-dirty (2025-10-04-22:44)
+所在位置 行:7 字符: 8
++ $out = openocd -f "D:\Newcode\Gimbal_24hero_CH010_20260111\openocd-jl ...
++        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (xPack Open On-C...25-10-04-22:44):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+adapter speed: 8000 kHz
+Warn : Failed to open device: LIBUSB_ERROR_NOT_FOUND
+Error: No J-Link device found
+

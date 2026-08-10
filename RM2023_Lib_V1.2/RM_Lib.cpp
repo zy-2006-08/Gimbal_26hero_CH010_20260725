@@ -142,6 +142,36 @@ void I_slow_ease(int *in, int target, float max_step, float min_step, float k, i
   }
 }
 
+// 缓出型 float 缓变函数:离目标远时匀速逼近,接近时按比例减速平滑到位(不取整,用于度数等 float 目标)
+// max_step: 远端最大步长  min_step: 最小步长(保证收敛)  k: 减速比例系数  stop_err: 到达阈值
+void F_slow_ease(float *in, float target, float max_step, float min_step, float k, float stop_err, float *inc_buf)
+{
+  float remaining = target - *in;
+  if (fabsf(remaining) <= stop_err) // 到达目标
+  {
+    *in = target;
+    *inc_buf = 0; // 清空缓冲,避免残留量影响下次调用
+    return;
+  }
+
+  // 按剩余距离成比例给步长:越近越慢
+  float step = remaining * k;
+
+  // 限幅:远端饱和到 max_step,近端保底 min_step,保证最终收敛
+  float mag = fabsf(step);
+  if (mag > max_step)
+    mag = max_step;
+  else if (mag < min_step)
+    mag = min_step;
+  step = (remaining > 0) ? mag : -mag;
+
+  // 防止越过目标:本次推进不得超过剩余距离
+  if (fabsf(step) > fabsf(remaining))
+    step = remaining;
+
+  *in += step;
+}
+
 /************************************ Gimbal_Zhou (云台单轴 GYRO 双环) *********************************/
 // 与原 YAW_PID_Calc / PITCH_PID_Calc 的 GYRO 分支逐行等价:
 //   自瞄 -> 先清常规组积分,外环(角度)->内环(角速度)->符号
@@ -188,7 +218,7 @@ float Gimbal_Zhou::Mang_calc(float g)
 {
     goal = g;
     pid_mang_wai->PID_update_LP(goal, *fankui_wai_angle, lp_mang_wai);
-    pid_mang_nei->PID_update(pid_mang_wai->OUT_PID, *fankui_gyro);
+    pid_mang_nei->PID_update(pid_mang_wai->OUT_PID, *fankui_mang_gyro);
     output = output_sign * pid_mang_nei->OUT_PID;
     return output;
 }

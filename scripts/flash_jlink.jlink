@@ -1,0 +1,8 @@
+si SWD
+speed 8000
+device STM32F405RG
+connect
+loadfile build/Debug/Gimbal_Demo.hex
+r
+g
+exit
