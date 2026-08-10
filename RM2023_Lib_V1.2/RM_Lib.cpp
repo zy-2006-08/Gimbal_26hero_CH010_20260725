@@ -13,28 +13,7 @@
 #include "crc.h"
 /**************************************** USART **********************************************************/
 uint8_t info_ubuf[USART_BUF_SIZE];
-// uint8_t INFO_DMA(const char *fmt, ...)
-// {
-//     uint8_t err_flag = HAL_OK;
-//     static uint8_t tx_buf[256] = {0};
-//     static va_list ap;
-//     static uint16_t len;
-//     va_start(ap, fmt);
-
-//     // return length of string
-//     // 返回字符串长度
-//     len = vsprintf((char *)tx_buf, fmt, ap);
-
-//     va_end(ap);
-//     err_flag = HAL_UART_Transmit_DMA(&huart1, tx_buf, len);
-//     return err_flag;
-// }
-
 /**************************************** CRC **********************************************************/
-// CRC-ITU16(算法A)已收纳进统一 crc 模块(crc.c/crc.h)。
-// 下列函数保留原签名与语义,仅转调 crc_itu16/crc_itu16_verify,调用点不变。
-
-// 计算给定长度数据的16位CRC。
 uint16_t GetCrc16(const unsigned char* pData, uint16_t nLength)
 {
     return crc_itu16(pData, nLength);
@@ -47,8 +26,6 @@ bool IsCrc16Good(const unsigned char* pData, uint16_t nLength)
 }
 
 /************************************ 通用缓变/斜坡工具 **************************************************/
-// 从 main.c 下沉的通用增量缓变/缓出斜坡函数(纯算法,逐字搬家,逻辑与原实现完全一致)。声明见 RM_Lib.h。
-
 // int16缓变函数:通过增量缓慢改变数值,避免突变
 void I16_slow(int16_t *in, int16_t target, float add_inc, float cut_inc, int16_t stop_err, float *inc_buf)
 {
